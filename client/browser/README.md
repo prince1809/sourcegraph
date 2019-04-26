@@ -1,0 +1,4 @@
+# Sourcegraph browser extension
+
+
+## Overview
