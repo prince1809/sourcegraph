@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
-#
-# Build commands, optionally with or without race detector. a list of query command we know about,
-# to use by default
-#
-# This will install binaries into the `.bin` directory under the repository root by default or, if
-# $GOMOD_ROOT is set, under that directory.
 
-all_oss_commands=" gitserver query-runner gihub-proxy management-console searcher frontend repo-updater symbols "
+# set to true if unset so set -u won't break us
+: ${SOURCEGRAPH_COMBINE_CONFIG:=false}
+
+set -euf -o pipefail
+
+unset CDPATH
+cd "$(dirname "${BASH_SOURCE[0]}")/.." # cd ro repo root dir
+
+if [ -f .env ]; then
+set -o allexport
+source .env
+set +o allexport
+fi
+
+export GO111MODULE=on
