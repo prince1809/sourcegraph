@@ -18,4 +18,5 @@ func main() {
 		fmt.Printf("Go version %s or newer must be used; found: %s\n", minimumVersion, versionNumber)
 		os.Exit(1) // minimum version not met means non-zero exit code
 	}
+	fmt.Printf("Go Version %s\n", versionNumber)
 }
