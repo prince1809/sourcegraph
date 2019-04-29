@@ -35,3 +35,9 @@ if ! psql -wc '\x' >/dev/null; then
   echo "You probably need, at least, PGUSER and PGPASSWD set in the environment"
   exit 1
 fi
+
+export LIGHTSTEP_INCLUDE_SENSITIVE=true
+export PGSSLMODE=disable
+
+# Default to "info" level debugging, and "condensed" log format (nice for human readers)
+export SRC_LOG_LEVEL=${SRC_LOG_LEVEL:-info}
