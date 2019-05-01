@@ -9,9 +9,9 @@ unset CDPATH
 cd "$(dirname "${BASH_SOURCE[0]}")/.." # cd ro repo root dir
 
 if [ -f .env ]; then
-set -o allexport
-source .env
-set +o allexport
+  set -o allexport
+  source .env
+  set +o allexport
 fi
 
 export GO111MODULE=on
@@ -74,3 +74,8 @@ if ! ./dev/go-install.sh; then
   echo >&2 "WARNING: go-install.sh failed, some builds may have failed."
   exit 1
 fi
+
+
+printf >&2 "\Starting all binaries...\n\n"
+export GOREMAN="goreman --set-ports=false --exit-on-error -f ${PROCFILE:-dev/Procfile}"
+exec $GOREMAN start

@@ -54,3 +54,69 @@ github.com/google/zoekt/cmd/zoekt-archive-index \
 github.com/google/zoekt/cmd/zoekt-sourcegraph-indexserver \
 github.com/google/zoekt/cmd/zoekt-webserver \
 "
+
+if [ ! -n "${OFFLINE-}" ]; then
+    INSTALL_GO_PKGS="$INSTALL_GO_PKGS github.com/go-delve/delve/cmd/dlv"
+fi
+
+if ! go install $INSTALL_GO_PKGS; then
+	echo >&2 "failed to install prerequisites, aborting."
+	exit 1
+fi
+
+TAGS='dev'
+if [ -n "$DELVE" ]; then
+	echo >&2 'Building with optimizations disabled (for debugging). Make sure you have at least go1.10 installed.'
+	GCFLAGS='all=-N -l'
+	TAGS="$TAGS delve"
+fi
+# build a list of "cmd,true" and "cmd,false" pairs to indicate weather each command
+# wants its own flags. we can't use variable names with the command in them because
+# some commands have hyphens.
+raced=""
+unraced=""
+case $GORACED in
+"all") for cmd in $commands; do
+        raced="$raced $cmd"
+    done
+    ;;
+esac
+
+# Shared logic for the go install part
+do_install() {
+  race=$1
+  cmdlist="$*"
+  cmds=""
+  echo $cmdlist
+  for cmd in $cmdlist; do
+    replaced=false
+    if [ $replaced == false ]; then
+      cmds="$cmd github.com/prince1809/sourcegraph/cmd/$cmd"
+    fi
+  done
+  if (cd $GOMOD_ROOT && go install -v -gcflags="$GCFLAGS" -tags "$TAGS" -race=$race $cmds); then
+    if $verbose; then
+      # echo each command on its own line
+      echo "$cmdlist" | tr ' ' '\012'
+    fi
+  else
+    failed="$failed $cmdlist"
+  fi
+}
+
+
+if [ -n "$raced" ]; then
+  echo >&2 "Go race detector enabled for: $GORACED."
+  do_install true $raced
+else
+  echo >&2 "Go race detector disabled. You can enable it for specific command by setting GORACED (e.g. GORACED=frontend,searcher or GORACED=all for all commands)"
+fi
+
+if [ -n "$unraced" ]; then
+  do_install false $unraced
+fi
+
+if [ -n "$failed" ]; then
+  echo >&2 "failed to build:$failed"
+  exit 1
+fi
