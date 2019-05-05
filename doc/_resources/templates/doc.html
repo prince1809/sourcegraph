@@ -1,0 +1,32 @@
+{{define "root"}}
+<html>
+
+<head>
+    <title>
+        {{ with.Content }}{{.Doc.Title}} {{else}}Error{{ end }} - Sourcegraph docs
+    </title>
+    <link rel="stylesheet" href="{{asset "sourcegraph.css"}}?9" />
+    <link rel="stylesheet" href="{{asset "layout.css"}}?9" />
+    <link rel="stylesheet" href="{{asset "content.css"}}?9" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover" />
+    {{if (or (not .Content) .ContentVersion)}}
+    <meta name="robots" content="noindex">{{end}}
+</head>
+<body{{with .Content}}{{if eq (len .Breadcrumbs ) 0}} id="home" {{end}}{{if gt (len .Breadcrumbs ) 1}} data-path="{{.Path}}" {{end}}{{end}} class="theme theme-light">
+    <div class="global-navbar">
+        <input type="checkbox" id="nav-state" class="nav-state" />
+        <div class="nav-content">
+            <div class="nav-container flex-container">
+                <div class="nav-header">
+                        <a href="/" class="nav-logo">
+                            <img class="nav-logo-image small-hidden" src="/assets/sourcegraph-logo-docs.svg" alt="Sourcegraph Documentation">
+                            <img class="nav-logo-image-small large-hidden medium-hidden" src="/assets/sourcegraph-logo-docs-small.svg" alt="Sourcegraph Documentation">
+                        </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
+{{ end }}
