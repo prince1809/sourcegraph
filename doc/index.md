@@ -41,7 +41,7 @@ For example, if you are running Sourcegraph 3.1, then you can upgrade directly t
 
 ## Documentation
 
-Sourcegraph development is open source at [github.com/sourcegraph/sourcegraph](https://github.com/sourcegraph/sourcegraph). Need help? Use the [issue tracker](https://github.com/sourcegraph/sourcegraph/issues).
+Sourcegraph development is open source at [github.com/sourcegraph/sourcegraph](https://github.com/sourcegraph/sourcegraph). Need help? Use the [issue tracker](https://github.com/prince1809/sourcegraph/issues).
 
 ### Core documentation
 
@@ -75,7 +75,7 @@ For self-hosted Sourcegraph instances, you run a Docker image or Kubernetes clus
 
 ## Other links
 
-- [Sourcegraph open-source repository](https://github.com/sourcegraph/sourcegraph)
+- [Sourcegraph open-source repository](https://github.com/prince1809/sourcegraph)
 - [Contributing to Sourcegraph](dev/index.md)
 - [Sourcegraph blog](https://about.sourcegraph.com/blog/)
 - [Issue tracker](https://github.com/sourcegraph/sourcegraph/issues)
