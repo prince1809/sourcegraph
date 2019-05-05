@@ -1,0 +1,252 @@
+/* Root Layout */
+body {
+  /* Flexbox is not used for docs site */
+  /* Ignore root flex layout from Sourcegraph theme */
+  display: block !important;
+  flex: none !important;
+  margin: 0;
+  padding: 0;
+  height: inherit;
+}
+.root-layout {
+  display: block;
+  margin: 0;
+}
+.section-content {
+  display: block;
+  position: relative;
+  margin: auto;
+  max-width: 980px;
+}
+/* Create non-flexbox grid system for docs */
+.column {
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 0;
+  min-height: 2px;
+  display: inline-block;
+  margin-right: -4px;
+}
+
+.flex-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: between;
+  height: 100%;
+}
+
+/* Global Nav Layout */
+.global-navbar {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(255, 255, 255, 0.85);
+  -webkit-backdrop-filter: saturate(240%) blur(14px);
+  backdrop-filter: saturate(240%) blur(14px);
+}
+
+@media screen and (max-width: 768px) {
+  .global-navbar {
+    position: absolute;
+    top: 0;
+  }
+}
+
+.nav-content {
+  height: 100%;
+  padding: 0 1rem;
+  border-bottom: 1px solid #eaecee;
+}
+
+.nav-header {
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.nav-links {
+  flex: 1 0;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-right: 0.25rem;
+  white-space: nowrap;
+}
+
+.nav-logo {
+  flex: 0 0;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  color: inherit;
+  text-decoration: none;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  margin-right: 0.5rem;
+  text-align: left;
+}
+
+.nav-logo-image {
+  width: 220px;
+  text-align: left;
+  padding-top: 5px;
+  padding-bottom: 4px;
+}
+
+.nav-logo-image-small {
+  width: 80px;
+}
+
+.form-inline {
+  margin: 0;
+  align-self: flex-end;
+}
+
+.nav-search-button {
+  margin-left: 0.5rem;
+  height: 34px;
+}
+
+.nav-link-container {
+  list-style: none;
+  margin: 0;
+}
+
+.nav-link {
+  margin-left: 0;
+  float: left;
+  list-style: none;
+}
+
+.nav-state,
+.mobile-nav-button {
+  display: none;
+}
+
+.version-dropdown {
+  position: relative;
+  top: 1px;
+}
+
+.dropdown-item {
+  cursor: pointer;
+}
+
+.monospace-text {
+  font-family: 'SF Mono', Melno, monospace;
+}
+
+.current-branch {
+  position: absolute;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  font-size: 8px;
+  letter-spacing: 0.04rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 1.5px solid #566e9f;
+  padding: 2px 4px;
+  border-radius: 2px;
+  margin-left: 12px;
+  margin-top: 1px;
+}
+
+.active .current-branch,
+a:active .current-branch {
+  border: 1.5px solid #ffffff;
+}
+.content-nav {
+  position: -webkit-sticky;
+  position: sticky;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  widows: 100%;
+  height: calc(100% - 70)px;
+  padding-bottom: 2rem;
+  padding-top: 0;
+  max-height: calc(100vh -70px);
+  top: 70px;
+  padding-top: 4px;
+  overflow-scrolling: touch;
+}
+
+.content-nav-section {
+  list-style: none;
+  padding-left: 0; 
+}
+
+.content-nav-home {
+  margin-bottom: 0.6rem;
+}
+
+.content-nav-section li {
+  list-style: none;
+}
+
+.content-nav-section .close--icon + li {
+  padding-right: 17px;
+}
+
+.content-nav-section li a {
+  transition: all 200ms ease;
+  color: #405377;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.content-nav-section li a:hover {
+  text-decoration: none;
+  color: #242e42;
+}
+
+.content-nav > ul {
+  border-bottom: 1px solid #eaeaea;
+  padding-right: 8px;
+  padding-top: 0.5rem;
+}
+
+.content-nav > ul:first-of-type {
+  border-top: none;
+}
+
+.content-nav > ul ul {
+  padding-left: 0;
+}
+
+.content-nav > ul li {
+  padding-left: 10px;
+}
+
+a.content-nav-section-header {
+  display: block;
+  width: 100%;
+  font-size: 15px;
+  font-weight: 500;
+  color: #242e42 !important;
+}
+
+.content-nav-section-group {
+  line-height: normal;
+}
+
+.content-nav-button {
+  cursor: pointer;
+  z-index: 900;
+  opacity: 0;
+  top: 0px;
+  width: 34px;
+  height: 40px;
+  display: block;
+  right: 0;
+  position: absolute;
+}
