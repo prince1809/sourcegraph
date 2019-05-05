@@ -6,12 +6,12 @@
 set -euf -o pipefail
 
 unset CDPATH
-cd "$(dirname "${BASH_SOURCE[0]}")/.." # cd ro repo root dir
+cd "$(dirname "${BASH_SOURCE[0]}")/.." # cd to repo root dir
 
 if [ -f .env ]; then
-  set -o allexport
-  source .env
-  set +o allexport
+    set -o allexport
+    source .env
+    set +o allexport
 fi
 
 export GO111MODULE=on
@@ -21,19 +21,18 @@ export GOMOD_ROOT="${GOMOD_ROOT:-$PWD}"
 
 # Verify postgresql config.
 hash psql 2>/dev/null || {
-  # "brew install postgresql@9.6" does not put psql on the $PATH by default;
-  # try to fix this automatically if we can.
-  hash brew 2>/dev/null && {
-    if [[ -x "$(brew --prefix)/opt/postgresql@9.6/bin/psql" ]]; then
-      export PATH="$(brew --prefix)/opt/postgresql@9.6/bin:$PATH"
-    fi
-  }
+    # "brew install postgresql@9.6" does not put psql on the $PATH by default;
+    # try to fix this automatically if we can.
+    hash brew 2>/dev/null && {
+        if [[ -x "$(brew --prefix)/opt/postgresql@9.6/bin/psql" ]]; then
+            export PATH="$(brew --prefix)/opt/postgresql@9.6/bin:$PATH"
+        fi
+    }
 }
-
 if ! psql -wc '\x' >/dev/null; then
-  echo "FAIL: postgreSQL config invalid or missing or postgreSQL is still starting up"
-  echo "You probably need, at least, PGUSER and PGPASSWD set in the environment"
-  exit 1
+    echo "FAIL: postgreSQL config invalid or missing OR postgreSQL is still starting up."
+    echo "You probably need, at least, PGUSER and PGPASSWORD set in the environment."
+    exit 1
 fi
 
 export LIGHTSTEP_INCLUDE_SENSITIVE=true
@@ -45,8 +44,20 @@ export SRC_LOG_FORMAT=${SRC_LOG_FORMAT:-condensed}
 export GITHUB_BASE_URL=http://127.0.0.1:3180
 export SRC_REPOS_DIR=$HOME/.sourcegraph/repos
 export INSECURE_DEV=1
+export SRC_GIT_SERVERS=127.0.0.1:3178
 export GOLANGSERVER_SRC_GIT_SERVERS=host.docker.internal:3178
-
+export SEARCHER_URL=http://127.0.0.1:3181
+export REPO_UPDATER_URL=http://127.0.0.1:3182
+export REDIS_ENDPOINT=127.0.0.1:6379
+export QUERY_RUNNER_URL=http://localhost:3183
+export SYMBOLS_URL=http://localhost:3184
+export SRC_SYNTECT_SERVER=http://localhost:9238
+export SRC_FRONTEND_INTERNAL=localhost:3090
+export SRC_PROF_HTTP=
+export SRC_PROF_SERVICES=$(cat dev/src-prof-services.json)
+export OVERRIDE_AUTH_SECRET=sSsNGlI8fBDftBz0LDQNXEnP6lrWdt9g0fK6hoFvGQ
+export DEPLOY_TYPE=dev
+export ZOEKT_HOST=localhost:3070
 
 # webpack-dev-server is a proxy running on port 3080 that (1) serves assets, waiting to respond
 # until they are built and (2) otherwise proxies to nginx running on port 3081 (which proxies to
@@ -54,6 +65,9 @@ export GOLANGSERVER_SRC_GIT_SERVERS=host.docker.internal:3178
 # having port 3080.
 export SRC_HTTP_ADDR=":3082"
 export WEBPACK_DEV_SERVER=1
+
+export DEV_OVERRIDE_CRITICAL_CONFIG=${DEV_OVERRIDE_CRITICAL_CONFIG:-./dev/critical-config.json}
+export DEV_OVERRIDE_SITE_CONFIG=${DEV_OVERRIDE_SITE_CONFIG:-./dev/site-config.json}
 
 # WebApp
 export NODE_ENV=development
@@ -75,6 +89,21 @@ if ! ./dev/go-install.sh; then
   exit 1
 fi
 
+# Wait for yarn if it is still running
+if [[ -n "$yarn_pid" ]]; then
+    wait "$yarn_pid"
+fi
+
+# Increase ulimit (not needed on Windows/WSL)
+type ulimit > /dev/null && ulimit -n 10000 || true
+
+# Put .bin:node_modules/.bin onto the $PATH
+export PATH="$PWD/.bin:$PWD/node_modules/.bin:$PATH"
+
+# Management console webapp
+[ -n "${OFFLINE-}" ] || {
+    pushd ./cmd/management-console/web && yarn  --no-progress && popd
+}
 
 printf >&2 "\Starting all binaries...\n\n"
 export GOREMAN="goreman --set-ports=false --exit-on-error -f ${PROCFILE:-dev/Procfile}"
