@@ -1,0 +1,4 @@
+/* Line break that is only visible, but not copy-pasted. Used for terminal commands. */
+.virtual-br::before {
+  content: '\A';
+}
