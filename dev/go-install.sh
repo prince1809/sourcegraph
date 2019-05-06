@@ -7,7 +7,7 @@
 # $GOMOD_ROOT is set, under that directory.
 
 #all_oss_commands=" gitserver query-runner github-proxy management-console searcher replacer frontend repo-updater symbols "
-all_oss_commands=" frontend "
+all_oss_commands=" gitserver frontend "
 
 # GOMOD_ROOT is the directory from which `go install` commands are run. It should contain a go.mod
 # file. The go.mod file may be updated as a side effect of updating the dependencies before the `go

@@ -3,6 +3,7 @@ module github.com/prince1809/sourcegraph
 go 1.12
 
 require (
+	github.com/fatih/color v1.7.0 // indirect
 	github.com/gchaincl/sqlhooks v1.1.0
 	github.com/go-delve/delve v1.2.0 // indirect
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
