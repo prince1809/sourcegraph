@@ -26,5 +26,11 @@ func main() {
 	if err := os.MkdirAll(reposDir, os.ModePerm); err != nil {
 		log.Fatalf("failed to create SRC_REPOS_DIR: %s", err)
 	}
+
+	wantFreeG, err := strconv.Atoi(wantFreeG)
+	if err != nil {
+		log.Fatalf("parsing $SRC_REPOS_DESIRED_FREE_GB: %v", err)
+	}
+
 	fmt.Println("gitserver started")
 }
