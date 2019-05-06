@@ -3,11 +3,19 @@ module github.com/prince1809/sourcegraph
 go 1.12
 
 require (
+	github.com/gchaincl/sqlhooks v1.1.0
 	github.com/go-delve/delve v1.2.0 // indirect
-	github.com/google/zoekt v0.0.0-20190425223102-3493be98f11f // indirect
-	github.com/mattn/goreman v0.2.1 // indirect
+	github.com/go-sql-driver/mysql v1.4.1 // indirect
+	github.com/go-stack/stack v1.8.0 // indirect
+	github.com/google/zoekt v0.0.0-00010101000000-000000000000 // indirect
+	github.com/lib/pq v1.1.1
+	github.com/mattn/go-sqlite3 v1.10.0 // indirect
+	github.com/mattn/goreman v0.0.0-00010101000000-000000000000 // indirect
 	github.com/mcuadros/go-version v0.0.0-20190308113854-92cdf37c5b75
+	github.com/opentracing/opentracing-go v1.1.0
+	github.com/pkg/errors v0.8.1
 	github.com/sourcegraph/docsite v0.0.0-20190329030636-57dceb634057 // indirect
+	gopkg.in/inconshreveable/log15.v2 v2.0.0-20180818164646-67afb5ed74ec
 )
 
 replace (

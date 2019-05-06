@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/prince1809/sourcegraph/cmd/frontend/internal/cli"
+	"github.com/prince1809/sourcegraph/pkg/env"
 )
 
 // Main is the main function that runs the frontend process.
@@ -14,6 +15,7 @@ import (
 // main package implementation such as Sourcegraph Enterprise, which import
 // proprietary/private code.
 func Main() {
+	env.Lock()
 	err := cli.Main()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "fatal:", err)
