@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"github.com/prince1809/sourcegraph/cmd/frontend/globals"
+	"github.com/prince1809/sourcegraph/pkg/conf"
 	"github.com/prince1809/sourcegraph/pkg/db/dbconn"
 	"log"
 )
@@ -14,6 +16,8 @@ func Main() error {
 	if err := dbconn.ConnectToDB(""); err != nil {
 		log.Fatal(err)
 	}
+	globals.ConfigurationServerFrontendOnly = conf.InitConfigurationServerFrontendOnly(&configurationSource{})
+
 
 
 	println("frontend server started")
