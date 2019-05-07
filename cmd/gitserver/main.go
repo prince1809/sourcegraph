@@ -3,6 +3,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/opentracing-contrib/go-stdlib/nethttp"
+	"github.com/opentracing/opentracing-go"
+	"github.com/prince1809/sourcegraph/cmd/gitserver/server"
 	"github.com/prince1809/sourcegraph/pkg/env"
 	"log"
 	"os"
@@ -27,10 +30,24 @@ func main() {
 		log.Fatalf("failed to create SRC_REPOS_DIR: %s", err)
 	}
 
-	wantFreeG, err := strconv.Atoi(wantFreeG)
+	wantFreeG2, err := strconv.Atoi(wantFreeG)
 	if err != nil {
 		log.Fatalf("parsing $SRC_REPOS_DESIRED_FREE_GB: %v", err)
 	}
+	gitserver := server.Server{
+		ReposDir:                reposDir,
+		DeleteStaleRepositories: runRepoCleanup,
+		DesiredFreeDiskSpace:    uint64(wantFreeG2 * 1024 * 1024 * 1024),
+	}
+	gitserver.RegisterMetrics()
+
+	if tmpDir, err := gitserver.SetupAndClearTmp(); err != nil {
+		log.Fatalf("failed to setup temporary directory: %s", err)
+	} else {
+		os.Setenv("TMP_DIR", tmpDir)
+	}
+
+	_ = nethttp.Middleware(opentracing.GlobalTracer(), gitserver.Handler())
 
 	fmt.Println("gitserver started")
 }
