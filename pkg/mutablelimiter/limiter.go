@@ -38,6 +38,13 @@ func New(limit int) *Limiter {
 	return l
 }
 
+// SetLimit adjusts the limit. If we currently have more than limit context
+// acquired, then contexts are cancelled until we are within limit. Contexts
+// are canceled such that the older contexts are canceled.
+func (l *Limiter) SetLimit(limit int) {
+	l.adjustLimit <- limit
+}
+
 func (l *Limiter) do(limit int) {
 	cancelFuncs := list.New()
 	release := make(chan *list.Element)

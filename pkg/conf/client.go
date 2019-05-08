@@ -3,6 +3,7 @@ package conf
 import (
 	"github.com/prince1809/sourcegraph/pkg/conf/conftypes"
 	"sync"
+	"time"
 )
 
 type client struct {
@@ -58,4 +59,52 @@ func (c *client) Raw() conftypes.RawUnified {
 // is running.
 func (c *client) Get() *Unified {
 	return c.store.LastValid()
+}
+
+// Watch calls the given function whenever the configuration has changed. The new configuration is
+// accessed by calling conf.Get.
+//
+// Before Watch returns, it will invoke f to use the current configuration.
+//
+// Watch is a wrapper around client.Watch.
+//
+// IMPORTANT: Watch will block on config initialization. It therefore should *never* be called
+// synchronously in `init` functions.
+func Watch(f func()) {
+	defaultClient.Watch(f)
+}
+
+// Watch calls the given function in a separate goroutine whenever the
+// configuration has changed. The new configuration can be received by callling
+// conf.Get.
+// Before Watch returns, it will invoke f to use the current configuration.
+func (c *client) Watch(f func()) {
+	// Add the watcher channel now, rather than after invoking f below, in case
+	// an update were to happen while we were invoking f.
+	notify := make(chan struct{}, 1)
+	c.watchersMu.Lock()
+	c.watchers = append(c.watchers, notify)
+	c.watchersMu.Unlock()
+
+	// Call the function now, to use the current configuration.
+	c.store.WaitUntilInitialized()
+	f()
+
+	go func() {
+		// Invoke f when the configuration has changed.
+		for {
+			<-notify
+			f()
+		}
+	}()
+}
+
+type continuousUpdateOptions struct {
+	// delayBeforeUnreachableLog is how long to wait before logging an error upon initial startup
+	// due to the frontend being unreachable. It is used to avoid log spam when other services (that
+	// contact the frontend for configuration) start up before the frontend.
+	delayBeforeUnreachableLog time.Duration
+
+	log   func(format string, v ...interface{}) // log.Printf equivalent
+	sleep func()                                // sleep between updates
 }

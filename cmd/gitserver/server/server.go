@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/prince1809/sourcegraph/pkg/api"
 	"github.com/prince1809/sourcegraph/pkg/mutablelimiter"
-	"github.com/sourcegraph/sourcegraph/pkg/conf"
+	"github.com/prince1809/sourcegraph/pkg/conf"
 	"net/http"
 	"sync"
 	"time"
@@ -73,7 +73,12 @@ func (s *Server) Handler() http.Handler {
 	s.cloneLimiter = mutablelimiter.New(maxConcurrentClones)
 	s.cloneableLimiter = mutablelimiter.New(maxConcurrentClones)
 	conf.Watch(func() {
-
+		limit := conf.Get().GitMaxConcurrentClones
+		if limit == 0 {
+			limit = 5
+		}
+		s.cloneableLimiter.SetLimit(limit)
+		s.cloneableLimiter.SetLimit(limit)
 	})
 	mux := http.NewServeMux()
 	return mux

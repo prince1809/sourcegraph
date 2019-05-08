@@ -31,7 +31,6 @@ type OpenIDConnectAuthProvider struct {
 	ConfigID     string `json:"configID,omitempty"`
 	DisplayName  string `json:"displayName,omitempty"`
 	Issuer       string `json:"issuer"`
-
 }
 
 // OtherExternalServiceConnection description: Configuration for a Connection
@@ -84,6 +83,7 @@ type Settings struct {
 
 // SiteConfiguration description: Configuration for a Sourcegraph site.
 type SiteConfiguration struct {
-	AuthAccessTokens *AuthAccessTokens `json:"auth.accessTokens,omitempty"`
-	CorsOrigin       string            `json:"corsOrigin"`
+	AuthAccessTokens       *AuthAccessTokens `json:"auth.accessTokens,omitempty"`
+	GitMaxConcurrentClones int               `json:"gitMaxConcurrentClones"`
+	CorsOrigin             string            `json:"corsOrigin"`
 }
