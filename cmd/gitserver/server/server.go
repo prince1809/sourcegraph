@@ -2,8 +2,9 @@ package server
 
 import (
 	"context"
+	"github.com/prince1809/sourcegraph/pkg/api"
 	"github.com/prince1809/sourcegraph/pkg/mutablelimiter"
-	"github.com/sourcegraph/sourcegraph/pkg/api"
+	"github.com/sourcegraph/sourcegraph/pkg/conf"
 	"net/http"
 	"sync"
 	"time"
@@ -52,11 +53,28 @@ type locks struct {
 
 var longGitCommandTimeout = time.Hour
 
+// Handler returns the http.Handler that should be used to serve requests.
 func (s *Server) Handler() http.Handler {
 	s.ctx, s.cancel = context.WithCancel(context.Background())
 	s.locker = &RepositoryLocker{}
 	s.repoUpdateLocks = make(map[api.RepoName]*locks)
 
+	// GitMaxConcurrentClones controls the maximum number of clones that
+	// can happen at once on a single gitserver.
+	// Used to prevent throttle limit from a code host. Defaults to 5.
+	//
+	// The new repo-updater scheduler enforces the rate limit across all gitserver,
+	// so ideally this logic could be removed here; however, ensureRevision can also
+	// cause an update to happen and it is called on every exec command.
+	maxConcurrentClones := conf.Get().GitMaxConcurrentClones
+	if maxConcurrentClones == 0 {
+		maxConcurrentClones = 5
+	}
+	s.cloneLimiter = mutablelimiter.New(maxConcurrentClones)
+	s.cloneableLimiter = mutablelimiter.New(maxConcurrentClones)
+	conf.Watch(func() {
+
+	})
 	mux := http.NewServeMux()
 	return mux
 }

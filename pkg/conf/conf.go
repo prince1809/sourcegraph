@@ -55,6 +55,11 @@ func getMode() configurationMode {
 	}
 }
 
+var (
+	configurationServerFrontendOnly            *Server
+	configurationServerFrontendOnlyInitialized = make(chan struct{})
+)
+
 // InitConfigurationServerFrontendOnly creates and returns a configuration
 // server. This should only be invoked by frontend, or else a panic will
 // occur. This function should only ever be called once.
@@ -70,6 +75,7 @@ func InitConfigurationServerFrontendOnly(source ConfigurationSource) *Server {
 	}
 
 	server := NewServer(source)
+	//server.Start()
 
 	return server
 }
