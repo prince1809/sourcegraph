@@ -1,6 +1,9 @@
 package conf
 
 import (
+	"context"
+	"github.com/pkg/errors"
+	"github.com/prince1809/sourcegraph/pkg/api"
 	"github.com/prince1809/sourcegraph/pkg/conf/conftypes"
 	"sync"
 	"time"
@@ -107,4 +110,40 @@ type continuousUpdateOptions struct {
 
 	log   func(format string, v ...interface{}) // log.Printf equivalent
 	sleep func()                                // sleep between updates
+}
+
+// continuouslyUpdate runs (*client).fetchAndUpdate in an infinite loop, with error logging and
+// random sleep intervals.
+//
+// The optOnlySetByTests parameter is ONLY customized by tests. ALl callers in main code should pass
+// nil (so that the same defaults are used).
+func (c *client) continuouslyUpdate(optOnlySetByTests *continuousUpdateOptions) {
+
+}
+
+func (c *client) fetchAndUpdate() error {
+	ctx := context.Background()
+	var (
+		newConfig conftypes.RawUnified
+		err       error
+	)
+	if c.passthrough != nil {
+		newConfig, err = c.passthrough.Read(ctx)
+	} else {
+		newConfig, err = api.InternalClient.Configuration(ctx)
+	}
+	if err != nil {
+		return errors.Wrap(err, "unable to fetch new configuration")
+	}
+
+	configChange, err := c.store.MaybeUpdate(newConfig)
+	if err != nil {
+		return errors.Wrap(err, "unable to update new configuration")
+	}
+
+	if configChange.Changed {
+		//c.NotifyWatchers()
+	}
+	return nil
+
 }

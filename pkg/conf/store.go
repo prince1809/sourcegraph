@@ -1,6 +1,7 @@
 package conf
 
 import (
+	"github.com/pkg/errors"
 	"github.com/prince1809/sourcegraph/pkg/conf/conftypes"
 	"runtime/debug"
 	"sync"
@@ -50,6 +51,52 @@ func (s *Store) Raw() conftypes.RawUnified {
 	s.rawMu.RLock()
 	defer s.rawMu.RUnlock()
 	return s.raw
+}
+
+type UpdateResult struct {
+	Changed bool
+	Old     *Unified
+	New     *Unified
+}
+
+func (s *Store) MaybeUpdate(rawConfig conftypes.RawUnified) (UpdateResult, error) {
+	s.rawMu.Lock()
+	defer s.rawMu.Unlock()
+
+	s.configMu.Lock()
+	defer s.configMu.Unlock()
+
+	result := UpdateResult{
+		Changed: false,
+		Old:     s.lastValid,
+		New:     s.lastValid,
+	}
+
+	if rawConfig.Critical == "" {
+		return result, errors.New("invalid critical configuration (empty string)")
+	}
+
+	if rawConfig.Site == "" {
+		return result, errors.New("invalid site configuration (empty string)")
+	}
+
+	if s.raw.Equal(rawConfig) {
+		return result, nil
+	}
+	s.raw = rawConfig
+
+	newConfig, err := ParseConfig(rawConfig)
+	if err != nil {
+		return result, errors.Wrap(err, "when parsing rawConfig during update")
+	}
+
+	result.Changed = true
+	result.New = newConfig
+	s.lastValid = newConfig
+
+	s.initialize()
+
+	return result, nil
 }
 
 // WaitUntilInitialized blocks and only returns to the caller once the store

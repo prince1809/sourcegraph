@@ -25,6 +25,11 @@ type CriticalConfiguration struct {
 	AuthEnableUsernameChanges  bool `json:"auth.enableUsernameChanges,omitempty"`
 }
 
+// ExperimentalFeatures description: Experimental features to enable or disable. Features that are now enabled by default are marked as deprecated.
+type ExperimentalFeatures struct {
+	Discussions string `json:"discussions,omitempty"`
+}
+
 type OpenIDConnectAuthProvider struct {
 	ClientID     string `json:"clientID"`
 	ClientSecret string `json:"clientSecret"`
@@ -83,7 +88,8 @@ type Settings struct {
 
 // SiteConfiguration description: Configuration for a Sourcegraph site.
 type SiteConfiguration struct {
-	AuthAccessTokens       *AuthAccessTokens `json:"auth.accessTokens,omitempty"`
-	GitMaxConcurrentClones int               `json:"gitMaxConcurrentClones"`
-	CorsOrigin             string            `json:"corsOrigin"`
+	AuthAccessTokens       *AuthAccessTokens     `json:"auth.accessTokens,omitempty"`
+	ExperimentalFeatures   *ExperimentalFeatures `json:"experimentalFeatures,omitempty"`
+	GitMaxConcurrentClones int                   `json:"gitMaxConcurrentClones"`
+	CorsOrigin             string                `json:"corsOrigin"`
 }

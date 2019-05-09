@@ -60,6 +60,26 @@ var (
 	configurationServerFrontendOnlyInitialized = make(chan struct{})
 )
 
+func init() {
+	clientStore := NewStore()
+	defaultClient = &client{store: clientStore}
+
+	mode := getMode()
+
+	// Don't kickoff the background updaters for the client/server
+	// when running test cases.
+	if mode == modeTest {
+
+	}
+
+	// The default client is started in InitConfigurationServerFrontendOnly in
+	// the case of server mode.
+	if mode == modeClient {
+		go defaultClient.continuouslyUpdate(nil)
+		close(configurationServerFrontendOnlyInitialized)
+	}
+}
+
 // InitConfigurationServerFrontendOnly creates and returns a configuration
 // server. This should only be invoked by frontend, or else a panic will
 // occur. This function should only ever be called once.

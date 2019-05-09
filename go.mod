@@ -18,6 +18,8 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v0.9.2
 	github.com/sourcegraph/docsite v0.0.0-20190329030636-57dceb634057 // indirect
+	github.com/sourcegraph/jsonx v0.0.0-20190114210550-ba8cb36a8614
+	golang.org/x/net v0.0.0-20190110200230-915654e7eabc
 	gopkg.in/inconshreveable/log15.v2 v2.0.0-20180818164646-67afb5ed74ec
 )
 
