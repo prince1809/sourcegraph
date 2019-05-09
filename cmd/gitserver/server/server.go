@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 	"github.com/prince1809/sourcegraph/pkg/api"
-	"github.com/prince1809/sourcegraph/pkg/mutablelimiter"
 	"github.com/prince1809/sourcegraph/pkg/conf"
+	"github.com/prince1809/sourcegraph/pkg/mutablelimiter"
 	"net/http"
 	"sync"
 	"time"
@@ -81,5 +81,8 @@ func (s *Server) Handler() http.Handler {
 		s.cloneableLimiter.SetLimit(limit)
 	})
 	mux := http.NewServeMux()
+	mux.HandleFunc("/ping", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 	return mux
 }

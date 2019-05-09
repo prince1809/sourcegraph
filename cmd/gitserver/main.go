@@ -2,12 +2,15 @@
 package main
 
 import (
-	"fmt"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prince1809/sourcegraph/cmd/gitserver/server"
+	"github.com/prince1809/sourcegraph/pkg/debugserver"
 	"github.com/prince1809/sourcegraph/pkg/env"
+	"github.com/prince1809/sourcegraph/pkg/tracer"
 	"log"
+	"net"
+	"net/http"
 	"os"
 	"strconv"
 )
@@ -22,6 +25,7 @@ var (
 func main() {
 	env.Lock()
 	env.HandleHelpFlag()
+	tracer.Init()
 
 	if reposDir == "" {
 		log.Fatal("git-server: SRC_REPOS_DIR is required")
@@ -47,7 +51,23 @@ func main() {
 		os.Setenv("TMP_DIR", tmpDir)
 	}
 
-	_ = nethttp.Middleware(opentracing.GlobalTracer(), gitserver.Handler())
+	// Create Handler now since it also initializes state
+	handler := nethttp.Middleware(opentracing.GlobalTracer(), gitserver.Handler())
 
-	fmt.Println("gitserver started")
+	go debugserver.Start()
+
+	port := "3178"
+	host := ""
+	if env.InsecureDev {
+		host = "127.0.0.1"
+	}
+	addr := net.JoinHostPort(host, port)
+	srv := &http.Server{Addr: addr, Handler: handler}
+
+	// Stop accepting requests. In the future we should use graceful shutdown.
+	srv.Close()
+
+	// The most important thins this does is kill all our clones. if we just
+	// shutdown they will be orphaned and continue running.
+	//gitserver.Stop()
 }
