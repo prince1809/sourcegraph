@@ -8,6 +8,7 @@ import (
 	"github.com/prince1809/sourcegraph/pkg/debugserver"
 	"github.com/prince1809/sourcegraph/pkg/env"
 	"github.com/prince1809/sourcegraph/pkg/tracer"
+	"gopkg.in/inconshreveable/log15.v2"
 	"log"
 	"net"
 	"net/http"
@@ -63,11 +64,19 @@ func main() {
 	}
 	addr := net.JoinHostPort(host, port)
 	srv := &http.Server{Addr: addr, Handler: handler}
+	log15.Info("git-server: listening", "addr", srv.Addr)
+
+	go func() {
+		err := srv.ListenAndServe()
+		if err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
 
 	// Stop accepting requests. In the future we should use graceful shutdown.
 	srv.Close()
 
 	// The most important thins this does is kill all our clones. if we just
 	// shutdown they will be orphaned and continue running.
-	//gitserver.Stop()
+	gitserver.Stop()
 }

@@ -86,3 +86,13 @@ func (s *Server) Handler() http.Handler {
 	})
 	return mux
 }
+
+// Stop cancels the running background jobs and returns when done.
+func (s *Server) Stop() {
+	// idempotent so we can just always set and cancel
+	s.cancel()
+	s.cancelMu.Lock()
+	s.cancelled = true
+	s.cancelMu.Unlock()
+	s.wg.Wait()
+}

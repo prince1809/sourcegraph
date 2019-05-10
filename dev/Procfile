@@ -1,3 +1,2 @@
 gitserver: gitserver
-frontend: env CONFIGURATION_MODE=server frontend
 docsite: .bin/docsite -config doc/docsite.json serve -http=localhost:5080

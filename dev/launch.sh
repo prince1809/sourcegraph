@@ -60,8 +60,8 @@ export DEPLOY_TYPE=dev
 export ZOEKT_HOST=localhost:3070
 
 # webpack-dev-server is a proxy running on port 3080 that (1) serves assets, waiting to respond
-# until they are built and (2) otherwise proxies to nginx running on port 3081 (which proxies to
-# sourcegraph running on port 3082). That is why Sourcegraph listens on 3081 despite the externalURL
+# until they are (re)built and (2) otherwise proxies to nginx running on port 3081 (which proxies to
+# Sourcegraph running on port 3082). That is why Sourcegraph listens on 3081 despite the externalURL
 # having port 3080.
 export SRC_HTTP_ADDR=":3082"
 export WEBPACK_DEV_SERVER=1
@@ -74,19 +74,19 @@ export NODE_ENV=development
 export NODE_OPTIONS="--max_old_space_size=4096"
 
 # Make sure chokidar-cli is installed in the background
-printf >&2 "Currently installing Yarn and Go dependencies...\n\n"
+printf >&2 "Concurrently installing Yarn and Go dependencies...\n\n"
 yarn_pid=''
-[ -n "${OFFLINE-}"] || {
-  yarn --no-progress &
-  yarn_pid="$!"
+[ -n "${OFFLINE-}" ] || {
+    yarn --no-progress &
+    yarn_pid="$!"
 }
 
 if ! ./dev/go-install.sh; then
-  # let yarn finish, otherwise we get Yarn diagnostics AFTER the
-  # actual reason we're failing.
-  wait
-  echo >&2 "WARNING: go-install.sh failed, some builds may have failed."
-  exit 1
+	# let Yarn finish, otherwise we get Yarn diagnostics AFTER the
+	# actual reason we're failing.
+	wait
+	echo >&2 "WARNING: go-install.sh failed, some builds may have failed."
+	exit 1
 fi
 
 # Wait for yarn if it is still running
@@ -105,6 +105,6 @@ export PATH="$PWD/.bin:$PWD/node_modules/.bin:$PATH"
     pushd ./cmd/management-console/web && yarn  --no-progress && popd
 }
 
-printf >&2 "\Starting all binaries...\n\n"
+printf >&2 "\nStarting all binaries...\n\n"
 export GOREMAN="goreman --set-ports=false --exit-on-error -f ${PROCFILE:-dev/Procfile}"
 exec $GOREMAN start
