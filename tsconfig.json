@@ -1,0 +1,28 @@
+{
+  "extends": "@sourcegraph/tsconfig",
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "commonjs",
+    "allowJs": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "lib": [
+      "esnext",
+      "dom",
+      "dom.iterable"
+    ],
+    "sourceMap": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "noErrorTruncation": true,
+    "importHelpers": true,
+    "resolveJsonModule": true
+  },
+  "files": [
+    "gulpfile.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

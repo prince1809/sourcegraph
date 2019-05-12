@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react",
+    "sourceRoot": "src",
+    "typeRoots": [
+      "src/types",
+      "../node_modules/@types"
+    ]
+  },
+  "include": [
+    "**/*"
+  ],
+  "exclude": [
+    "../node_modules"
+  ]
+}
