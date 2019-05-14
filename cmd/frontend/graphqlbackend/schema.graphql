@@ -26,3 +26,10 @@ interface Node {
 
 # A valid JSON value.
 scalar JSONValue
+
+# A mutation
+type Mutation {
+    # Updates the user profile information for the user with the given ID.
+    #
+    # Only the user and site admins may perform this mutation.
+}
