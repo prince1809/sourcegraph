@@ -37,10 +37,10 @@ func (s *Server) RegisterMetrics() {
 	}
 
 	c := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-		Namespace:"src",
-		Subsystem:"gitserver",
-		Name:"disk_space_available",
-		Help:"Amount of free space disk space on the repos mount.",
+		Namespace: "src",
+		Subsystem: "gitserver",
+		Name:      "disk_space_available",
+		Help:      "Amount of free space disk space on the repos mount.",
 	}, func() float64 {
 		var stat syscall.Statfs_t
 		syscall.Statfs(s.ReposDir, &stat)

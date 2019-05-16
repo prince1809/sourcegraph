@@ -50,7 +50,7 @@ You have two options for installing these dependencies.
 
 This is a streamlined setup for Mac machines.
 
-1. Install [Homebrew](https;//brew.sh).
+1. Install [Homebrew](https://brew.sh).
 2. Install [Docker for Mac](https://doc.docker.com/docker-for-mac/).
 
    Optionally via `brew`

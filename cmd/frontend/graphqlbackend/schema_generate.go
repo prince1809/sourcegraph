@@ -3,6 +3,6 @@ package main
 
 import "io/ioutil"
 
-func main()  {
+func main() {
 	out, err := ioutil.ReadFile("schema.graphql")
 }

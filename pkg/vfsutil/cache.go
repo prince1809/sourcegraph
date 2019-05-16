@@ -25,4 +25,3 @@ type cachedFile struct {
 func (f *cachedFile) Evict() {
 	panic("implement me")
 }
-

@@ -5,7 +5,7 @@ import (
 	"github.com/prince1809/sourcegraph/pkg/env"
 )
 
-func Main()  {
+func Main() {
 	env.Lock()
 	fmt.Println("management-console started")
 }

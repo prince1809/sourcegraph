@@ -16,6 +16,7 @@ require (
 	github.com/opentracing-contrib/go-stdlib v0.0.0-20190324214902-3020fec0e66b
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/pkg/errors v0.8.1
+	github.com/prince1809/docsite v0.0.0-20190504121554-6a8ea0582d71 // indirect
 	github.com/prometheus/client_golang v0.9.2
 	github.com/sourcegraph/docsite v0.0.0-20190329030636-57dceb634057 // indirect
 	github.com/sourcegraph/jsonx v0.0.0-20190114210550-ba8cb36a8614
