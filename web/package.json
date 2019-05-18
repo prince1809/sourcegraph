@@ -16,7 +16,8 @@
     "tslint": "tslint -t stylish -c tslint.json -p tsconfig.json -e 'src/schema/**' 'src/**/*.ts?(x)' 'types/**/*.ts?(x)' './*.ts?(x)'",
     "stylelint": "stylelint 'src/**/*.scss'",
     "bundlesize": "cross-env GITHUB_TOKEN= bundlesize",
-    "browserslist": "browserslist"
+    "browserslist": "browserslist",
+    "greet": "cross-env-shell GREETING=Hi NAME=Joe \"echo $GREETING && echo $NAME\""
   },
   "bundlesize": [
     {
