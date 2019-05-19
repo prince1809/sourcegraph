@@ -2,10 +2,11 @@
 // <reference path="../shared/src/types/terser-webpack-plugin/index.d.ts" />
 
 import MiniCssExtractPlugin from 'mini-css-extract-plugin'
+import OptimizeCssAssetsPlugin from 'optimize-css-assets-webpack-plugin';
 import * as path from 'path'
-import * as webpack from 'webpack'
 // @ts-ignore
-
+import rxPaths from 'rxjs/_esm5/path-mapping'
+import * as webpack from 'webpack'
 const mode = process.env.NODE_ENV === 'production' ? 'production' : 'development'
 console.log('Using mode', mode)
 
@@ -13,7 +14,7 @@ const devtool = mode === 'production' ? 'source-map' : 'cheap-module-eval-source
 
 const rootDir = path.resolve(__dirname, '..')
 const nodeModulesPath = path.resolve(__dirname, '..', 'node_modules')
-// const monacoEditorPaths = [path.resolve(nodeModulePath, 'monaco-editor')]
+const monacoEditorPaths = [path.resolve(nodeModulesPath, 'monaco-editor')]
 
 const babelLoader: webpack.RuleSetUseItem = {
     loader: 'babel-loader',
@@ -64,8 +65,39 @@ const config: webpack.Configuration = {
         pathinfo: false,
     },
     devtool,
-    plugins: [],
-    resolve: {},
+    plugins: [
+        // Needed for React
+        new webpack.DefinePlugin({
+            'process.env': {
+                NODE_ENV: JSON.stringify(mode),
+            },
+        }),
+        new webpack.ContextReplacementPlugin(/\node_modules\/@sqs\/jsonc-parser\/lib\/edit\.js$/, /.*/),
+        new MiniCssExtractPlugin({filename: 'style/[name].bundle.css'}) as any, // @@types package is incorrect
+        new OptimizeCssAssetsPlugin(),
+        // Don't build the files referenced by dynamic imports for all the basic languages monaco supports.
+        // They won't ever be loaded at runtime because we only edit JSON
+        new webpack.IgnorePlugin(/^\.\/[^]+.js$/, /\/node_modules\/monaco-editor\/esm\/vs\/basic-languages\/\w+$/),
+        // same for "advanced" languages
+        new webpack.IgnorePlugin(/^\.\/.+$/, /\/node_modules\/monaco-editor\/esm\/vs\/language\/(?!json)/),
+        new webpack.IgnorePlugin(/\.flow$/, /.*/),
+    ],
+    resolve: {
+        extensions: ['.mjs', '.ts', '.tsx', '.js'],
+        mainFields: ['es2015', 'module', 'browser', 'main'],
+        alias: {
+            ...rxPaths(),
+
+            // HACK: This is required because the codeintellify package has a hardcoded import that assumes that
+            // ../node_modules/@sourcegraph/react-loading-spinner is a valid path. This is not a correct assumption
+            // in general, and it also breaks in this build because CSS imports URLs are not resolved (we would
+            // need to use resolve-url-loader). There are many possible fixes that are more complex, but this hack
+            // works fine for now.
+            '../node_modules/@sourcegraph/react-loading-spinner/lib/LoadingSpinner.css': require.resolve(
+                '@sourcegraph/react-loading-spinner/lib/LoadingSpinner.css'
+            ),
+        },
+    },
     module: {
         rules: [
             {
@@ -95,6 +127,12 @@ const config: webpack.Configuration = {
                         },
                     },
                 ],
+            },
+            {
+                // CSS rule for monaco-editor and other external plain CSS (skip SASS and PostCSS for build perf)
+                test: /\.css$/,
+                include: monacoEditorPaths,
+                use: ['style-loader', 'css-loader'],
             },
         ],
     },
