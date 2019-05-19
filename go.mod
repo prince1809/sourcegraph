@@ -18,6 +18,8 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/prince1809/docsite v0.0.0-20190504121554-6a8ea0582d71 // indirect
 	github.com/prometheus/client_golang v0.9.2
+	github.com/shurcooL/httpfs v0.0.0-20181222201310-74dc9339e414 // indirect
+	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd // indirect
 	github.com/sourcegraph/docsite v0.0.0-20190329030636-57dceb634057 // indirect
 	github.com/sourcegraph/jsonx v0.0.0-20190114210550-ba8cb36a8614
 	golang.org/x/net v0.0.0-20190110200230-915654e7eabc
