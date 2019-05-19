@@ -9,6 +9,14 @@
     "parentScript": "cross-env GREET=\"Joe\" npm run childScript",
     "childScript": "cross-env-shell \"echo Hello $GREET\""
   },
+  "browserslist": [
+    "last 1 version",
+    ">1%",
+    "not dead",
+    "not <0.25%",
+    "last 1 Chrome versions",
+    "not IE > 0"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/prince1809/sourcegraph.git"
@@ -45,6 +53,7 @@
     "@types/webpack": "^4.4.31",
     "@types/webpack-dev-server": "^3.1.5",
     "babel-loader": "^8.0.6",
+    "babel-plugin-lodash": "^3.3.4",
     "bootstrap": "^4.3.1",
     "cross-env": "^5.2.0",
     "css-loader": "^2.1.1",
@@ -52,6 +61,7 @@
     "graphql": "^14.3.0",
     "gulp": "^4.0.1",
     "mini-css-extract-plugin": "0.6.0",
+    "monaco-editor": "^0.17.0",
     "mz": "^2.7.0",
     "node-sass": "^4.12.0",
     "postcss-loader": "^3.0.0",

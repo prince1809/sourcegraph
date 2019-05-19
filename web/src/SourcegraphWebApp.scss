@@ -7,3 +7,9 @@ It should import all component stylesheets
 // stylelint-disable no-duplicate-selectors
 
 // Media breakpoints
+$container-max-widths: (
+    sm: null,
+    md: null,
+    lg: null,
+    xl: 1140px,
+);
