@@ -35,9 +35,9 @@ for pkg in $server_pkg \
     github.com/prince1809/sourcegraph/cmd/query-runner \
     github.com/prince1809/sourcegraph/cmd/repo-updater \
     github.com/prince1809/sourcegraph/cmd/searcher \
-    github.com/prince1809/sourcegraph/cmd/zoekt-archive-index \
-    github.com/prince1809/sourcegraph/cmd/zoekt-sourcegraph-indexserver \
-    github.com/prince1809/sourcegraph/cmd/zoekt-webserver $additional_images; do
+    github.com/google/zoekt/cmd/zoekt-archive-index \
+    github.com/google/zoekt/cmd/zoekt-sourcegraph-indexserver \
+    github.com/google/zoekt/cmd/zoekt-webserver $additional_images; do
 
     go build \
         -a \
