@@ -1,8 +1,10 @@
 package main
 
-import "log"
+import (
+	"log"
+)
 
 func main()  {
-
+	//env.Lock()
 	log.Println("github-proxy")
 }
