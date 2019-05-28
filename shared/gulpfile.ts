@@ -1,10 +1,9 @@
-import { generateNamespace } from '@gql2ts/from-schema'
-import { DEFAULT_OPTIONS, DEFAULT_TYPE_MAP } from '@gql2ts/language-typescript'
+import {generateNamespace} from '@gql2ts/from-schema'
+import {DEFAULT_TYPE_MAP} from '@gql2ts/language-typescript'
 import {buildSchema, graphql, IntrospectionQuery, introspectionQuery} from 'graphql';
 import gulp from 'gulp'
-import {readFile} from 'mz/fs'
+import {readFile, writeFile} from 'mz/fs'
 import path from 'path';
-import {resolveConfig} from 'prettier'
 
 const GRAPHQL_SCHEMA_PATH = path.join(__dirname, '../cmd/frontend/graphqlbackend/schema.graphql')
 
@@ -20,7 +19,7 @@ export async function graphQLTypes(): Promise<void> {
     const schema = buildSchema(schemaStr)
     const result = (await graphql(schema, introspectionQuery)) as { data: IntrospectionQuery }
 
-    const formatOptions = (await resolveConfig(__dirname, {config: __dirname + '/../prettier.config.js'}))
+    // const formatOptions = (await resolveConfig(__dirname, {config: __dirname + '/../prettier.config.js'}))
     const typings =
         'export type ID = string\n\n' +
         generateNamespace(
@@ -32,17 +31,15 @@ export async function graphQLTypes(): Promise<void> {
                     ID: 'ID',
                 },
             },
-            {
-
-            }
+            {}
         )
+    await writeFile(__dirname + '/src/graphql/schema.ts', typings)
 }
 
 /**
  * Generate the Typescript types for the JSON schemas.
  */
 export async function schema(): Promise<void> {
-
 }
 
 export async function watchSchema(): Promise<void> {

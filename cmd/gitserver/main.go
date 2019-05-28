@@ -28,6 +28,8 @@ func main() {
 	env.HandleHelpFlag()
 	tracer.Init()
 
+	log.Println("server starting")
+
 	if reposDir == "" {
 		log.Fatal("git-server: SRC_REPOS_DIR is required")
 	}

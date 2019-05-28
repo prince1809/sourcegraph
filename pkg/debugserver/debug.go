@@ -2,10 +2,12 @@ package debugserver
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/prince1809/sourcegraph/pkg/env"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 var (
@@ -64,4 +66,17 @@ func Start(extra ...Endpoint) {
 	if addr == "" {
 		return
 	}
+	pp := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`
+			<a href="vars">Vars</a><br>
+			<a href="debug/pprof/">PProf</a><br>
+		`))
+		for _, e := range extra {
+			fmt.Fprintf(w, `<a href="%s">%s</a><br>`, strings.TrimPrefix(e.Path, "/"), e.Name)
+		}
+		w.Write([]byte(`
+			<br>
+			<form method="post" action="gc" style="display: inline;"><input type="submit" value="GC"></form>
+		`))
+	})
 }
