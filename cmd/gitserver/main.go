@@ -13,7 +13,10 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
+	"time"
 )
 
 var (
@@ -59,6 +62,17 @@ func main() {
 
 	go debugserver.Start()
 
+	janitorInterval2, err := time.ParseDuration(janitorInterval)
+	if err != nil {
+		log.Fatalf("parsing $SRC_REPOS_JANITOR_INTERVAL: %v", err)
+	}
+	go func() {
+		for {
+			gitserver.Janitor()
+			time.Sleep(janitorInterval2)
+		}
+	}()
+
 	port := "3178"
 	host := ""
 	if env.InsecureDev {
@@ -73,6 +87,16 @@ func main() {
 		if err != http.ErrServerClosed {
 			log.Fatal(err)
 		}
+	}()
+
+	// Listen for shutdown signals. When we receive one attempt to clean up.
+	// but we do an insta-shutdown if we receive more than one signal.
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGHUP)
+	<-c
+	go func() {
+		<-c
+		os.Exit(0)
 	}()
 
 	// Stop accepting requests. In the future we should use graceful shutdown.

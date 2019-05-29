@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/prince1809/sourcegraph/pkg/env"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -63,10 +64,12 @@ type Service struct {
 // Start runs a debug server (pprof, prometheus, etc) if it is configured ( via
 // SRC_PROF_HTTP environment variable). It is blocking.
 func Start(extra ...Endpoint) {
+	log.Println("Starting debug server")
 	if addr == "" {
 		return
 	}
-	pp := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	pp := http.NewServeMux()
+	index := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`
 			<a href="vars">Vars</a><br>
 			<a href="debug/pprof/">PProf</a><br>
@@ -79,4 +82,8 @@ func Start(extra ...Endpoint) {
 			<form method="post" action="gc" style="display: inline;"><input type="submit" value="GC"></form>
 		`))
 	})
+	pp.Handle("/", index)
+	pp.Handle("/debug", index)
+
+	log.Println("warning: could not start debug HTTP server:", http.ListenAndServe(addr, pp))
 }

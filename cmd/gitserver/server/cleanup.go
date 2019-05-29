@@ -8,6 +8,16 @@ import (
 	"strings"
 )
 
+// cleanupRepos walks the repos directory and performs maintenance tasks:
+//
+// 1. Remove corrupt repos.
+// 2. Remove stale lock files.
+// 3. Remove inactive repos on sourcegraph.com
+// 4. Reclone repos after a while. (simulate git gc)
+func (s *Server) cleanupRepos() {
+
+}
+
 // SetupAndClearTmp sets up the tempdir for ReposDir as well as clearing it
 // out. It returns the temporary directory location.
 func (s *Server) SetupAndClearTmp() (string, error) {

@@ -87,6 +87,11 @@ func (s *Server) Handler() http.Handler {
 	return mux
 }
 
+// Janitor does clean up tasks over s.ReposDir.
+func (s *Server) Janitor() {
+	s.cleanupRepos()
+}
+
 // Stop cancels the running background jobs and returns when done.
 func (s *Server) Stop() {
 	// idempotent so we can just always set and cancel
