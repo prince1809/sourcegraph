@@ -15,6 +15,7 @@ import (
 // 3. Remove inactive repos on sourcegraph.com
 // 4. Reclone repos after a while. (simulate git gc)
 func (s *Server) cleanupRepos() {
+	_, _ = s.serverContext()
 
 }
 

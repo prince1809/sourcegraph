@@ -4,14 +4,47 @@ import (
 	"context"
 	"github.com/prince1809/sourcegraph/pkg/api"
 	"github.com/prince1809/sourcegraph/pkg/conf"
+	"github.com/prince1809/sourcegraph/pkg/env"
 	"github.com/prince1809/sourcegraph/pkg/mutablelimiter"
 	"net/http"
+	"os/exec"
+	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
 // tempDirName is the name used for the temporary directory under ReposDir.
 const tempDirName = ".tmp"
+
+// traceLogs is controlled via the env SRC_GITSERVER_TRACE. If true we trace
+// logs to stderr
+var traceLogs bool
+
+var lastCheckAt = make(map[api.RepoName]time.Time)
+var lastCheckMutex sync.Mutex
+
+// debounce() provides some filtering to prevent spammy requests for the same
+// repository. If the last fetch of the repository was within the given
+// duration, returns false, otherwise returns true and updates the last
+// fetch stamp.
+func debounce(name api.RepoName, since time.Duration) bool {
+	lastCheckMutex.Lock()
+	defer lastCheckMutex.Unlock()
+	if t, ok := lastCheckAt[name]; ok && time.Now().Before(t.Add(since)) {
+		return false
+	}
+	lastCheckAt[name] = time.Now()
+	return true
+}
+
+func init() {
+	traceLogs, _ = strconv.ParseBool(env.Get("SRC_GITSERVER_TRACE", "false", "Toggles since logging to stderr"))
+}
+
+// runCommandMock is set by tests. When non-nil it is run instead of
+// runCommand
+var runCommandMock func(context.Context, *exec.Cmd) (int, error)
 
 // Server is a gitserver server.
 type Server struct {
@@ -100,4 +133,34 @@ func (s *Server) Stop() {
 	s.cancelled = true
 	s.cancelMu.Unlock()
 	s.wg.Wait()
+}
+
+// serveContext returns a child context tied to the lifecycle of server.
+func (s *Server) serverContext() (context.Context, context.CancelFunc) {
+	// If we are already cancelled don't increment waitgroup. This is to
+	// prevent a loop somewhere preventing us from ever finishing the
+	// waitgroup, even though all calls fails instantly due to the cancelled
+	// context.
+	s.cancelMu.Lock()
+	if s.cancelled {
+		s.cancelMu.Unlock()
+		return s.ctx, func() {}
+	}
+	s.wg.Add(1)
+	s.cancelMu.Unlock()
+
+	ctx, cancel := context.WithCancel(s.ctx)
+
+	// we need to track if we have called cancel, since we are only allowed to
+	// call wg.Done() once, but cancelFunc can be called any number of times.
+	var cancelled int32
+	return ctx, func() {
+		ok := atomic.CompareAndSwapInt32(&cancelled, 0, 1)
+		if ok {
+			cancel()
+			s.wg.Done()
+		}
+	}
+
+
 }
