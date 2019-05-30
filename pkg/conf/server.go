@@ -2,8 +2,12 @@ package conf
 
 import (
 	"context"
+	"github.com/labstack/gommon/log"
+	"github.com/pkg/errors"
 	"github.com/prince1809/sourcegraph/pkg/conf/conftypes"
+	"math/rand"
 	"sync"
+	"time"
 )
 
 // ConfigurationSource provides direct access to read and write to the
@@ -16,6 +20,11 @@ type ConfigurationSource interface {
 
 type Server struct {
 	Source ConfigurationSource
+
+	store *Store
+
+	needRestartMu sync.RWMutex
+	needRestart   bool
 
 	// fileWrite signals when our app writes to the configuration file. The
 	// secondary channel is closed when server.Raw() would return the new
@@ -44,4 +53,71 @@ func (s *Server) Write(ctx context.Context, input conftypes.RawUnified) error {
 	// is proper JSON).
 	panic("implement me")
 	return nil
+}
+
+// Start initializes the server instance.
+func (s *Server) Start() {
+	s.once.Do(func() {
+		go s.watchSource()
+	})
+}
+
+// watchSource reloads the configuraiton from the source at least every five seconds or whenever
+// server.Write() is called.
+func (s *Server) watchSource() {
+	ctx := context.Background()
+	for {
+		jitter := time.Duration(rand.Int63n(5 * int64(time.Second)))
+
+		var signalDoneReading chan struct{}
+		select {
+		case signalDoneReading = <-s.fileWrite:
+			// File was changed on FS, so check now
+		case <-time.After(jitter):
+			//　File was possibly changed on FS, so check now.
+		}
+
+		err := s.updateFromSource(ctx)
+		if err != nil {
+			log.Printf("failed to read configuration: %s. Fix your Sourcegraph configuration to resolve this error. Visit https://docs.sourcegraph.com to learn more.", err)
+		}
+
+		if signalDoneReading != nil {
+			close(signalDoneReading)
+		}
+	}
+}
+
+func (s *Server) updateFromSource(ctx context.Context) error {
+	rawConfig, err := s.Source.Read(ctx)
+	if err != nil {
+		return errors.Wrap(err, "unable to read configuration")
+	}
+
+	configChange, err := s.store.MaybeUpdate(rawConfig)
+	if err != nil {
+		return err
+	}
+
+	// Don't need to restart if the configuration hasn't changed
+	if !configChange.Changed {
+		return nil
+	}
+
+	// Don't restart if the configuration was empty before (this only occurs during initialization).
+	if configChange.Old == nil {
+		return nil
+	}
+
+	// Update global "needs restart" state.
+	if NeedRestartToApply(configChange.Old, configChange.New) {
+		s.markNeedServerRestart()
+	}
+	return nil
+}
+
+func (s *Server) markNeedServerRestart() {
+	s.needRestartMu.Lock()
+	s.needRestart = true
+	s.needRestartMu.Unlock()
 }

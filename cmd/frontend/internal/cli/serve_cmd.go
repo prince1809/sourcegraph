@@ -46,7 +46,6 @@ func Main() error {
 		log.Fatal(err)
 	}
 	globals.ConfigurationServerFrontendOnly = conf.InitConfigurationServerFrontendOnly(&configurationSource{})
-
 	if printLogo {
 		fmt.Println(" ")
 		fmt.Println(logoColor)

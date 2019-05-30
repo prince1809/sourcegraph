@@ -12,6 +12,7 @@ require (
 	github.com/google/zoekt v0.0.0-00010101000000-000000000000
 	github.com/kevinburke/differ v0.0.0-20180721181420-bdfd927653c8
 	github.com/kevinburke/go-bindata v3.13.0+incompatible
+	github.com/labstack/gommon v0.2.8
 	github.com/lib/pq v1.1.1
 	github.com/mattn/go-colorable v0.1.1 // indirect
 	github.com/mattn/go-isatty v0.0.7 // indirect
@@ -28,6 +29,7 @@ require (
 	github.com/sourcegraph/docsite v0.0.0-20190329030636-57dceb634057
 	github.com/sourcegraph/go-jsonschema v0.0.0-20190205151546-7939fa138765
 	github.com/sourcegraph/jsonx v0.0.0-20190114210550-ba8cb36a8614
+	github.com/valyala/fasttemplate v1.0.1 // indirect
 	golang.org/x/net v0.0.0-20190313220215-9f648a60d977
 	golang.org/x/sys v0.0.0-20190502145724-3ef323f4f1fd // indirect
 	golang.org/x/tools v0.0.0-20190314010720-f0bfdbff1f9c

@@ -95,7 +95,7 @@ func InitConfigurationServerFrontendOnly(source ConfigurationSource) *Server {
 	}
 
 	server := NewServer(source)
-	//server.Start()
+	server.Start()
 
 	return server
 }

@@ -59,6 +59,14 @@ type UpdateResult struct {
 	New     *Unified
 }
 
+// MaybeUpdate attempts to update the store with the supplied rawConfig.
+//
+// If the rawConfig isn't syntactically valid JSON, the store's LastValid field.
+// won't be updating and a parsing error will be returned
+// from the previous time that this function was called.
+//
+// configChange is defined iff the cache was actually updated.
+
 func (s *Store) MaybeUpdate(rawConfig conftypes.RawUnified) (UpdateResult, error) {
 	s.rawMu.Lock()
 	defer s.rawMu.Unlock()
