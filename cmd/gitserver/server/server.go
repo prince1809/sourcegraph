@@ -2,12 +2,17 @@ package server
 
 import (
 	"context"
+	"github.com/pkg/errors"
+	"github.com/prince1809/sourcegraph/cmd/gitserver/protocol"
 	"github.com/prince1809/sourcegraph/pkg/api"
 	"github.com/prince1809/sourcegraph/pkg/conf"
 	"github.com/prince1809/sourcegraph/pkg/env"
 	"github.com/prince1809/sourcegraph/pkg/mutablelimiter"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -161,6 +166,74 @@ func (s *Server) serverContext() (context.Context, context.CancelFunc) {
 			s.wg.Done()
 		}
 	}
+}
 
+// tempDir is a wrapper around ioutil.TempDir, but using the server's
+// temporary directory filepath.Join(s.reposDir, tempDir).
+//
+// This directory is cleaned up by gitserver and will be ignored by repository
+// listing operations.
+func (s *Server) tempDir(prefix string) (name string, err error) {
+	dir := filepath.Join(s.ReposDir, tempDirName)
 
+	// create tmpDir if it doesn't exist yet.
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		return "", err
+	}
+
+	return ioutil.TempDir(dir, prefix)
+}
+
+// setGitAttribute writes our global gitattributes to
+// gitDir/attributes. This will override .gitattributes inside of
+// repositories. It is used to unset attributes such as export-ignore.
+func setGitAttributes(gitDir string) error {
+	infoDir := filepath.Join(gitDir, "info")
+	if err := os.Mkdir(infoDir, os.ModePerm); err != nil && !os.IsExist(err) {
+		return errors.Wrap(err, "failed to set git attributes")
+	}
+
+	_, err := updateFileDifferent(
+		filepath.Join(infoDir, "attribute"),
+		[]byte(`# Mapped by Sourcegraph gitserver.
+
+# We want every file to be present in git archive.
+* -export-ignore
+`))
+	if err != nil {
+		return errors.Wrap(err, "failed to set git attributes")
+	}
+	return nil
+}
+
+// cloneOptions specify optional behaviour for the cloneRepo function.
+type CloneOptions struct {
+	// Block will wait for the clone to finish before returning. If the clone
+	// fails, the error will be returned. The passed in context is
+	// respected. When not blocking the clone is done with a server background
+	// context.
+	Block bool
+
+	// Overwrite will overwrite the existing clone.
+	Overwrite bool
+}
+
+// cloneRepo issue a git clone command for the given repo. It is
+// non-blocking.
+func (s *Server) cloneRepo(ctx context.Context, repo api.RepoName, url string, opts *CloneOptions) (string, error) {
+	dir := filepath.Join(s.ReposDir, string(protocol.NormalizeRepo(repo)))
+
+	// PREF: Before doing the network requet to check if isCloneable, lets
+	// ensure we are not already cloning.
+	if progress, cloneInProgress := s.locker.Status(dir); cloneInProgress {
+		return progress, nil
+	}
+
+	// isCloneable cause a network request, so we limit the number that can
+	// run at one time. We use a separate semaphore to cloning since these
+	// checks being blocked by a few slow clones will lead to poor feedback
+	// to users. We can defer since the rest of the function does not block this
+	// goroutine.
+	//ctx, cancel, err := s.acqu
+	return "", nil
 }
