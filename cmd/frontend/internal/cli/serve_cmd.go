@@ -42,7 +42,7 @@ func init() {
 
 }
 
-// Main is the main entrypoint for the frontend server progral¥m.
+// Main is the main entrypoint for the frontend server program.
 func Main() error {
 	log.SetFlags(0)
 	log.SetPrefix("")
@@ -52,12 +52,13 @@ func Main() error {
 		log.Fatal(err)
 	}
 	globals.ConfigurationServerFrontendOnly = conf.InitConfigurationServerFrontendOnly(&configurationSource{})
+
+
 	if printLogo {
 		fmt.Println(" ")
 		fmt.Println(logoColor)
 		fmt.Println(" ")
 	}
-
 
 	// Create the external HTTP handler
 	externalHandler, err := newExternalHTTPHandler(context.Background())
@@ -81,6 +82,8 @@ func Main() error {
 	})
 
 	fmt.Printf("* Sourcegraph is ready at: %s \n", globals.ExternalURL)
+
+	srv.Wait()
 
 	return nil
 }
@@ -113,4 +116,13 @@ func (s *httpServers) addServer(srv *http.Server) *http.Server {
 	}
 	s.servers = append(s.servers, srv)
 	return srv
+}
+
+// Wait waits until all servers are closed.
+func (s *httpServers) Wait() {
+	s.wg.Wait()
+}
+
+func isAllowedOrigin(origin string, allowedOrigins []string) bool {
+	return false
 }

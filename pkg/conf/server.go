@@ -42,6 +42,7 @@ func NewServer(source ConfigurationSource) *Server {
 	fileWrite := make(chan chan struct{}, 1)
 	return &Server{
 		Source:    source,
+		store:     NewStore(),
 		fileWrite: fileWrite,
 	}
 }
@@ -62,7 +63,7 @@ func (s *Server) Start() {
 	})
 }
 
-// watchSource reloads the configuraiton from the source at least every five seconds or whenever
+// watchSource reloads the configuration from the source at least every five seconds or whenever
 // server.Write() is called.
 func (s *Server) watchSource() {
 	ctx := context.Background()

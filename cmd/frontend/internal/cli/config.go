@@ -8,6 +8,7 @@ import (
 type configurationSource struct{}
 
 func (configurationSource) Write(ctx context.Context, data conftypes.RawUnified) error {
+	critical, err := confdb.
 	panic("implement me")
 }
 
