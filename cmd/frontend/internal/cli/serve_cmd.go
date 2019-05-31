@@ -1,15 +1,21 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"github.com/prince1809/sourcegraph/cmd/frontend/globals"
 	"github.com/prince1809/sourcegraph/pkg/conf"
 	"github.com/prince1809/sourcegraph/pkg/db/dbconn"
 	"github.com/prince1809/sourcegraph/pkg/env"
 	"github.com/prince1809/sourcegraph/pkg/vfsutil"
+	"gopkg.in/inconshreveable/log15.v2"
 	"log"
+	"net"
+	"net/http"
 	"path/filepath"
 	"strconv"
+	"sync"
+	"time"
 )
 
 var (
@@ -51,6 +57,60 @@ func Main() error {
 		fmt.Println(logoColor)
 		fmt.Println(" ")
 	}
+
+
+	// Create the external HTTP handler
+	externalHandler, err := newExternalHTTPHandler(context.Background())
+	if err != nil {
+		return err
+	}
+
+	// serve will serve externalHanlder on l, It additionally handles graceful restarts.
+	srv := &httpServers{}
+
+	// Start the http server.
+	l, err := net.Listen("tcp", httpAddr)
+	if err != nil {
+		return err
+	}
+	log15.Debug("HTTP running", "on", httpAddr)
+	srv.GoServe(l, &http.Server{
+		Handler:      externalHandler,
+		ReadTimeout:  75 * time.Second,
+		WriteTimeout: 60 * time.Second,
+	})
+
 	fmt.Printf("* Sourcegraph is ready at: %s \n", globals.ExternalURL)
+
 	return nil
+}
+
+type httpServers struct {
+	mu      sync.Mutex
+	wg      sync.WaitGroup
+	servers []*http.Server
+	wrapper func(http.Handler) http.Handler
+}
+
+// GoServe serves srv in a new goroutine. If serve returns an error other than
+// http.ErrServerClosed it will fatal.
+func (s *httpServers) GoServe(l net.Listener, srv *http.Server) {
+	s.addServer(srv)
+	s.wg.Add(1)
+	go func() {
+		defer s.wg.Done()
+		if err := srv.Serve(l); err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+}
+
+func (s *httpServers) addServer(srv *http.Server) *http.Server {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.wrapper != nil {
+		srv.Handler = s.wrapper(srv.Handler)
+	}
+	s.servers = append(s.servers, srv)
+	return srv
 }
