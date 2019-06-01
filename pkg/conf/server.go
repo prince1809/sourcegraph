@@ -2,7 +2,7 @@ package conf
 
 import (
 	"context"
-	"github.com/labstack/gommon/log"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/prince1809/sourcegraph/pkg/conf/conftypes"
 	"math/rand"
@@ -80,7 +80,7 @@ func (s *Server) watchSource() {
 
 		err := s.updateFromSource(ctx)
 		if err != nil {
-			log.Printf("failed to read configuration: %s. Fix your Sourcegraph configuration to resolve this error. Visit https://docs.sourcegraph.com to learn more.", err)
+			fmt.Printf("failed to read configuration: %s. Fix your Sourcegraph configuration to resolve this error. Visit https://docs.sourcegraph.com to learn more.", err)
 		}
 
 		if signalDoneReading != nil {
