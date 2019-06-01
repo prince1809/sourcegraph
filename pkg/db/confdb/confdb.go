@@ -25,6 +25,26 @@ type SiteConfig Config
 // CriticalConfig contains the contents of a critical config along with associated metadata.
 type CriticalConfig Config
 
+// SiteGetLatest returns the site config that was most recently saved to the database.
+// This returns nil, nil if there is not yet a site config in the database.
+//
+// 🚨 SECURITY: This method does NOT verify the user is an admin. The caller is
+// responsible for ensuring this or that the response never makes it to a user.
+func SiteGetLatest(ctx context.Context) (latest *SiteConfig, err error) {
+	tx, done, err := newTransaction(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer done()
+
+	_, err = addDefault(ctx, tx, typeSite, confdefaults.Default.Site)
+	if err != nil {
+		return nil, err
+	}
+	site, err := getLatest(ctx, tx, typeSite)
+	return (*SiteConfig)(site), err
+}
+
 // CriticalGetLatest returns critical site config that was most recently saved to the database.
 // This returns nil, nil if there is not yet a critical config in the database.
 //
@@ -127,7 +147,7 @@ func parseQueryRows(ctx context.Context, rows *sql.Rows) ([]*Config, error) {
 // inside and outside an explicit transactions.
 type queryTable interface {
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
-	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Rows
+	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
 }
 
 type configType string
