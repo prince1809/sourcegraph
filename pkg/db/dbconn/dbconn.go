@@ -239,6 +239,7 @@ func DoMigrate(m *migrate.Migrate) (err error) {
 	}
 
 	if os.IsNotExist(err) {
+		fmt.Println("Database migration error: ", err)
 		// This should only happen if the DB is ahead of the migrations available
 		version, dirty, verr := m.Version()
 		if verr != nil {
@@ -252,7 +253,9 @@ func DoMigrate(m *migrate.Migrate) (err error) {
 		log15.Warn("WARNING: Detected an old version of Sourcegraph. The database has migrated to a newwer version. If you have applied a rollback, this is expected and you can ignore this warning. ", "db_version", version)
 		return nil
 	}
-	fmt.Println("Getting error:", err)
+	if err != nil {
+		fmt.Println("Getting error:", err)
+	}
 	return err
 
 }
