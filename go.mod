@@ -12,6 +12,7 @@ require (
 	github.com/golangci/golangci-lint v1.16.0
 	github.com/google/zoekt v0.0.0-00010101000000-000000000000
 	github.com/hashicorp/go-multierror v1.0.0
+	github.com/joho/godotenv v1.3.0
 	github.com/keegancsmith/sqlf v1.1.0
 	github.com/kevinburke/differ v0.0.0-20180721181420-bdfd927653c8
 	github.com/kevinburke/go-bindata v3.13.0+incompatible

@@ -8,11 +8,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/golang-migrate/migrate"
-	"github.com/golang-migrate/migrate/database/postgres"
-	bindata "github.com/golang-migrate/migrate/source/go_bindata"
-	"github.com/prince1809/sourcegraph/migrations"
-	"github.com/prometheus/client_golang/prometheus"
 	"log"
 	"net"
 	"os"
@@ -22,12 +17,17 @@ import (
 	"time"
 
 	"github.com/gchaincl/sqlhooks"
+	"github.com/golang-migrate/migrate"
+	"github.com/golang-migrate/migrate/database/postgres"
+	bindata "github.com/golang-migrate/migrate/source/go_bindata"
 	"github.com/lib/pq"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
+	"github.com/prince1809/sourcegraph/migrations"
 	"github.com/prince1809/sourcegraph/pkg/env"
+	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/inconshreveable/log15.v2"
 )
 
@@ -35,7 +35,7 @@ var (
 	// Globals is the global DB connection
 	Global *sql.DB
 
-	defaultDataSource = env.Get("PGDATASOURCE", "", "Default dataSource to passs to Postgres. See https://godoc.org/github.com/lib/pq for more information.")
+	defaultDataSource = env.Get("PGDATASOURCE", "", "Default dataSource to pass to Postgres. See https://godoc.org/github.com/lib/pq for more information.")
 )
 
 // ConnectToDB connects to the given DB and stores the handle globally.
@@ -97,6 +97,7 @@ func openDBWithStartupWait(dataSource string) (db *sql.DB, err error) {
 			time.Sleep(startupTimeout / 10)
 			continue
 		}
+		fmt.Printf("Opening of connection to db: %s\n", dataSource)
 		return db, err
 	}
 }
@@ -117,12 +118,13 @@ func isDatabaseLikelyStartingUp(err error) bool {
 
 var registerOnce sync.Once
 
-// Open creates a new DB handle with the given shceme by connecting to
+// Open creates a new DB handle with the given schema by connecting to
 // the database identified by dataSource (e.g., "dbname=mypgdb" or
 // blank to use the PG* env vars).
 //
 // Open assumes that the database already exists.
 func Open(dataSource string) (*sql.DB, error) {
+	fmt.Println("Opening: ", dataSource)
 	registerOnce.Do(func() {
 		sql.Register("postgres-proxy", sqlhooks.Wrap(&pq.Driver{}, &hook{}))
 	})
