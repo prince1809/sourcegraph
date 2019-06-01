@@ -8,9 +8,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/golang-migrate/migrate"
+	"github.com/golang-migrate/migrate/database/postgres"
+	bindata "github.com/golang-migrate/migrate/source/go_bindata"
+	"github.com/prince1809/sourcegraph/migrations"
+	"github.com/prometheus/client_golang/prometheus"
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -53,9 +59,15 @@ func ConnectToDB(dataSource string) error {
 	var err error
 	Global, err = openDBWithStartupWait(dataSource)
 	if err != nil {
-		return errors.Wrap(err, "Error setting PGTZ=UTC")
+		return errors.Wrap(err, "DB not available")
 	}
 
+	registerPrometheusCollector(Global, "_app")
+	configureConnectionPool(Global)
+
+	if err := DoMigrate(NewMigrate(Global)); err != nil {
+		return errors.Wrap(err, "Failed to migrate the DB.")
+	}
 	return nil
 }
 
@@ -162,4 +174,83 @@ func (h *hook) OnError(ctx context.Context, err error, query string, args ...int
 		span.Finish()
 	}
 	return err
+}
+
+func registerPrometheusCollector(db *sql.DB, dbNameSuffix string) {
+	c := prometheus.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Namespace: "src",
+			Subsystem: "psql" + dbNameSuffix,
+			Name:      "open_connections",
+			Help:      "Number of open connections to psql DB, as reported by psql.DB.Stats()",
+		},
+		func() float64 {
+			s := db.Stats()
+			return float64(s.OpenConnections)
+		},
+	)
+	prometheus.MustRegister(c)
+}
+
+// configureConnectionPool sets reasonable sizes on the built in DB queue. By
+// default the connection pool is unbounded, which leads to the error `pq:
+// sorry too many clients already.`
+func configureConnectionPool(db *sql.DB) {
+	var err error
+	maxOpen := 30
+	if e := os.Getenv("SRC_PGSQL_MAX_OPEN"); e != "" {
+		maxOpen, err = strconv.Atoi(e)
+		if err != nil {
+			log.Fatalf("SRC_PGSQL_MAX_OPEN is not an int: %s", e)
+		}
+	}
+	db.SetMaxOpenConns(maxOpen)
+	db.SetMaxIdleConns(maxOpen)
+}
+
+func NewMigrate(db *sql.DB) *migrate.Migrate {
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s := bindata.Resource(migrations.AssetNames(), migrations.Asset)
+	d, err := bindata.WithInstance(s)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	m, err := migrate.NewWithInstance("go-bindata", d, "postgres", driver)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return m
+}
+
+func DoMigrate(m *migrate.Migrate) (err error) {
+	fmt.Println("Starting migration")
+	err = m.Up()
+	if err == nil || err == migrate.ErrNoChange {
+		fmt.Println("Failed to migrate up")
+		return nil
+
+	}
+
+	if os.IsNotExist(err) {
+		// This should only happen if the DB is ahead of the migrations available
+		version, dirty, verr := m.Version()
+		if verr != nil {
+			return verr
+		}
+
+		if dirty { // this shouldn't happen but checking anyways
+			fmt.Println("database is dirty", dirty, err)
+			return err
+		}
+		log15.Warn("WARNING: Detected an old version of Sourcegraph. The database has migrated to a newwer version. If you have applied a rollback, this is expected and you can ignore this warning. ", "db_version", version)
+		return nil
+	}
+	fmt.Println("Getting error:", err)
+	return err
+
 }

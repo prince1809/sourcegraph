@@ -8,6 +8,7 @@ require (
 	github.com/gchaincl/sqlhooks v1.1.0
 	github.com/go-delve/delve v1.2.0
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
+	github.com/golang-migrate/migrate v3.5.4+incompatible
 	github.com/golangci/golangci-lint v1.16.0
 	github.com/google/zoekt v0.0.0-00010101000000-000000000000
 	github.com/hashicorp/go-multierror v1.0.0
