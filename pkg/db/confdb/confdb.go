@@ -3,10 +3,13 @@ package confdb
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/hashicorp/go-multierror"
 	"github.com/keegancsmith/sqlf"
+	"github.com/pkg/errors"
 	"github.com/prince1809/sourcegraph/pkg/conf/confdefaults"
 	"github.com/prince1809/sourcegraph/pkg/db/dbconn"
+	"github.com/sourcegraph/jsonx"
 	"time"
 )
 
@@ -24,6 +27,11 @@ type SiteConfig Config
 
 // CriticalConfig contains the contents of a critical config along with associated metadata.
 type CriticalConfig Config
+
+// ErrNewerEdit is returned by SiteCreateIfUpToDate and
+// CriticalCreateIfUpToDate when a newer edit has already been applied and the
+// edit has been rejected.
+var ErrNewerEdit = errors.New("someone else has already applied a newer edit")
 
 // SiteGetLatest returns the site config that was most recently saved to the database.
 // This returns nil, nil if there is not yet a site config in the database.
@@ -103,10 +111,31 @@ func addDefault(ctx context.Context, tx queryTable, configType configType, conte
 }
 
 func createIfUpToDate(ctx context.Context, tx queryTable, configType configType, lastID *int32, contents string) (latest *Config, err error) {
+	// Validate JSON syntax before saving.
+	if _, errs := jsonx.Parse(contents, jsonx.ParseOptions{Comments: true, TrailingCommas: true}); len(errs) > 0 {
+		return nil, fmt.Errorf("invalid settings JSON: %v", errs)
+	}
+	new := Config{
+		Contents: contents,
+	}
 
-	panic("implement me")
+	latest, err = getLatest(ctx, tx, configType)
+	if err != nil {
+		return nil, err
+	}
+	if latest != nil && lastID != nil && latest.ID != *lastID {
+		return nil, ErrNewerEdit
+	}
 
-	return nil, nil
+	err = tx.QueryRowContext(
+		ctx,
+		"INSERT INTO critical_and_site_config(type, contents) VALUES($1, $2) RETURNING id, created_at, updated_at",
+		configType, new.Contents,
+	).Scan(&new.ID, &new.CreatedAt, &new.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &new, nil
 }
 
 func getLatest(ctx context.Context, tx queryTable, configType configType) (*Config, error) {

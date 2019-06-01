@@ -52,6 +52,7 @@ func Main() error {
 		log.Fatal(err)
 	}
 	globals.ConfigurationServerFrontendOnly = conf.InitConfigurationServerFrontendOnly(&configurationSource{})
+	conf.MustValidateDefaults()
 
 
 	if printLogo {

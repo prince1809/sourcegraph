@@ -12,11 +12,6 @@ import (
 
 type configurationSource struct{}
 
-func (configurationSource) Write(ctx context.Context, data conftypes.RawUnified) error {
-	//critical, err := confdb.
-	panic("implement me")
-}
-
 func (configurationSource) Read(ctx context.Context) (conftypes.RawUnified, error) {
 	critical, err := confdb.CriticalGetLatest(ctx)
 	if err != nil {
@@ -37,6 +32,12 @@ func (configurationSource) Read(ctx context.Context) (conftypes.RawUnified, erro
 		},
 	}, nil
 }
+
+func (configurationSource) Write(ctx context.Context, data conftypes.RawUnified) error {
+	//critical, err := confdb.
+	panic("implement me")
+}
+
 
 func postgresDSN() string {
 	username := ""
