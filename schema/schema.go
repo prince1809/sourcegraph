@@ -19,15 +19,102 @@ type AuthProviderCommon struct {
 	DisplayName string `json:"displayName,omitempty"`
 }
 
+type AuthProviders struct {
+}
+
+type BitbucketServerConnection struct {
+}
+
+type BrandAssets struct {
+}
+
+type Branding struct {
+}
+
+type BuilinAuthProvider struct {
+}
+
+type CloneURLToRepositoryName struct {
+}
+
 // CriticalConfiguration description: Critical configuration for a Sourcegraph site.
 type CriticalConfiguration struct {
 	AuthDisableUsernameChanges bool `json:"auth.disableUsernameChanges,omitempty"`
 	AuthEnableUsernameChanges  bool `json:"auth.enableUsernameChanges,omitempty"`
 }
 
+// Discussions description: Configures Sourcegraph code discussions.
+type Discussions struct {
+	AbuseEmails     []string `json:"abuseEmails,omitempty"`
+	AbuseProtection bool     `json:"abuseProtection,omitempty"`
+}
+
+type ExcludedBitbucketServerRepo struct {
+}
+
+type ExcludedGitHubRepo struct {
+}
+
+type ExcludedGitLabProject struct {
+}
+
 // ExperimentalFeatures description: Experimental features to enable or disable. Features that are now enabled by default are marked as deprecated.
 type ExperimentalFeatures struct {
 	Discussions string `json:"discussions,omitempty"`
+}
+
+type Extensions struct {
+}
+
+type ExternalIdentity struct {
+}
+
+type GithubAuthProvider struct {
+}
+
+type GithubAuthorization struct {
+}
+
+type GithubConnection struct {
+}
+
+type GitlabProvider struct {
+}
+
+type GitlabAuthorization struct {
+}
+
+type GitlabConnection struct {
+}
+
+type GitlabProject struct {
+}
+
+type GitoliteConnection struct {
+}
+
+type HTTPHeaderAuthProvider struct {
+}
+
+type IMAPServerConfig struct {
+}
+
+type IdentityProvider struct {
+}
+
+// Log description: Configuration for logging and alerting, including to external services.
+type Log struct {
+	Sentry *Sentry `json:"sentry,omitempty"`
+}
+
+type Notice struct {
+	Dismissible bool   `json:"dismissible,omitempty"`
+	Location    string `json:"location"`
+	Message     string `json:"message"`
+}
+
+type OAuthIdentity struct {
+	Type string `json:"type"`
 }
 
 type OpenIDConnectAuthProvider struct {
@@ -67,6 +154,12 @@ type SAMLAuthProvider struct {
 
 // SMTPServerConfig description: The SMTP server used to send transactional emails (such as email verification, reset-password emails, and notifications)
 type SMTPServerConfig struct {
+	Authentication string `json:"authentication"`
+	Domain         string `json:"domain,omitempty"`
+	Host           string `json:"host"`
+	Password       string `json:"password,omitempty"`
+	Port           int    `json:"port"`
+	Username       string `json:"username,omitempty"`
 }
 
 type SearchSavedQueries struct {
@@ -88,8 +181,35 @@ type Settings struct {
 
 // SiteConfiguration description: Configuration for a Sourcegraph site.
 type SiteConfiguration struct {
-	AuthAccessTokens       *AuthAccessTokens     `json:"auth.accessTokens,omitempty"`
-	ExperimentalFeatures   *ExperimentalFeatures `json:"experimentalFeatures,omitempty"`
-	GitMaxConcurrentClones int                   `json:"gitMaxConcurrentClones"`
-	CorsOrigin             string                `json:"corsOrigin"`
+	AuthAccessTokens                  *AuthAccessTokens           `json:"auth.accessTokens,omitempty"`
+	Branding                          *Branding                   `json:"branding,omitempty"`
+	CorsOrigin                        string                      `json:"corsOrigin"`
+	DisableAutoGitUpdates             bool                        `json:"disableAutoGitUpdates,omitempty"`
+	DisableBuiltInSearches            bool                        `json:"disableBuiltInSearches"`
+	DisablePublicRepoRedirects        bool                        `json:"disablePublicRepoRedirects,omitempty"`
+	Discussions                       *Discussions                `json:"discussions,omitempty"`
+	DontIncludeSymbolResultsByDefault bool                        `json:"dontIncludeSymbolResultsByDefault,omitempty"`
+	EmailAddress                      string                      `json:"email.address,omitempty"`
+	EmailImap                         *IMAPServerConfig           `json:"email.imap,omitempty"`
+	EmailSmtp                         *SMTPServerConfig           `json:"email.smtp,omitempty"`
+	ExperimentalFeatures              *ExperimentalFeatures       `json:"experimentalFeatures,omitempty"`
+	Extensions                        *Extensions                 `json:"extensions,omitempty"`
+	GitCloneURLToRepositoryName       []*CloneURLToRepositoryName `json:"git.cloneURLToRepositoryName,omitempty"`
+	GitMaxConcurrentClones            int                         `json:"gitMaxConcurrentClones"`
+	GithubClientID                    string                      `json:"githubClientID,omitempty"`
+	GithubClientSecret                string                      `json:"githubClientSecret,omitempty"`
+	MaxReposToSearch                  int                         `json:"maxReposToSearch,omitempty"`
+	ParentSourcegraph                 *ParentSourcegraph          `json:"parentSourcegraph,omitempty"`
+	RepoListUpdateInterval            int                         `json:"repoListUpdateInterval,omitempty"`
+	SearchIndexEnabled                *bool                       `json:"search.index.enabled,omitempty"`
+	SearchLargeFiles                  []string                    `json:"search.largeFiles,omitempty"`
+}
+
+// SlackNotificationsConfig description: Configuration for sending notification to slack.
+type SlackNotificationConfig struct {
+	WebhookURL string `json:"webhookURL"`
+}
+
+type UsernameIdentity struct {
+	Type string `json:"type"`
 }

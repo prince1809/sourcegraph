@@ -34,6 +34,9 @@ require (
 	github.com/sourcegraph/go-jsonschema v0.0.0-20190205151546-7939fa138765
 	github.com/sourcegraph/jsonx v0.0.0-20190114210550-ba8cb36a8614
 	github.com/valyala/fasttemplate v1.0.1 // indirect
+	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
+	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
+	github.com/xeipuuv/gojsonschema v1.1.0
 	golang.org/x/net v0.0.0-20190313220215-9f648a60d977
 	golang.org/x/sys v0.0.0-20190502145724-3ef323f4f1fd // indirect
 	golang.org/x/tools v0.0.0-20190314010720-f0bfdbff1f9c

@@ -3,9 +3,10 @@ package conf
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/prince1809/sourcegraph/pkg/conf/confdefaults"
 	"github.com/prince1809/sourcegraph/pkg/conf/conftypes"
-	"github.com/sourcegraph/sourcegraph/pkg/jsonc"
-	"github.com/sourcegraph/sourcegraph/schema"
+	"github.com/prince1809/sourcegraph/pkg/jsonc"
+	"github.com/prince1809/sourcegraph/schema"
 	"github.com/xeipuuv/gojsonschema"
 	"strings"
 )
@@ -22,12 +23,14 @@ var ignoreLegacyKubernetesFields = map[string]struct{}{
 func Validate(input conftypes.RawUnified) (problems []string, err error) {
 	criticalProblems, err := doValidate(input.Critical, schema.CriticalSchemaJSON)
 	if err != nil {
+		fmt.Println("Critical problem")
 		return nil, err
 	}
 	problems = append(problems, criticalProblems...)
 
 	siteProblems, err := doValidate(input.Site, schema.SiteSchemaJSON)
 	if err != nil {
+		fmt.Println("Site problem")
 		return nil, err
 	}
 	problems = append(problems, siteProblems...)
@@ -95,11 +98,18 @@ type jsonLoader struct {
 // MustValidateDefaults should be called after all custom validators have been
 // registered. It will panic if any of the default deployment configurations
 // are invalid.
-func MustValidate() {
-
+func MustValidateDefaults() {
+	mustValidate("DevAndTesting", confdefaults.DevAndTesting)
 }
 
 // mustValidate panics if the configuration does not pass validation.
 func mustValidate(name string, cfg conftypes.RawUnified) conftypes.RawUnified {
-	problems, err := Validate
+	problems, err := Validate(cfg)
+	if err != nil {
+		panic(fmt.Sprintf("Error with %q: %s", name, err))
+	}
+	if len(problems) > 0 {
+		panic(fmt.Sprintf("conf: problems with default configuration for %q:\n %s", name, strings.Join(problems, " \n  ")))
+	}
+	return cfg
 }
