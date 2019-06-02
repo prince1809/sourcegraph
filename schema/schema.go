@@ -2,24 +2,199 @@
 
 package schema
 
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+)
+
 // AWSCodeCommitConnection description: Configuration for a connection to AWS CodeCommit.
 type AWSCodeCommitConnection struct {
-	Region interface{} `json:"region"`
+	AccessKeyID                 string `json:"accessKeyID"`
+	InitialRepositoryEnablement bool   `json:"initialRepositoryEnablement,omitempty"`
+	Region                      string `json:"region"`
+	RepositoryPathPattern       string `json:"repositoryPathPattern,omitempty"`
+	SecretAccessKey             string `json:"secretAccessKey"`
+}
+
+// AuthProviderCommon description: Common properties for authentication providers.
+type AuthProviderCommon struct {
+	DisplayName string `json:"displayName,omitempty"`
+}
+type AuthProviders struct {
+	Builtin       *BuiltinAuthProvider
+	Saml          *SAMLAuthProvider
+	Openidconnect *OpenIDConnectAuthProvider
+	HttpHeader    *HTTPHeaderAuthProvider
+	Github        *GitHubAuthProvider
+	Gitlab        *GitLabAuthProvider
+}
+
+func (v AuthProviders) MarshalJSON() ([]byte, error) {
+	if v.Builtin != nil {
+		return json.Marshal(v.Builtin)
+	}
+	if v.Saml != nil {
+		return json.Marshal(v.Saml)
+	}
+	if v.Openidconnect != nil {
+		return json.Marshal(v.Openidconnect)
+	}
+	if v.HttpHeader != nil {
+		return json.Marshal(v.HttpHeader)
+	}
+	if v.Github != nil {
+		return json.Marshal(v.Github)
+	}
+	if v.Gitlab != nil {
+		return json.Marshal(v.Gitlab)
+	}
+	return nil, errors.New("tagged union type must have exactly 1 non-nil field value")
+}
+func (v *AuthProviders) UnmarshalJSON(data []byte) error {
+	var d struct {
+		DiscriminantProperty string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &d); err != nil {
+		return err
+	}
+	switch d.DiscriminantProperty {
+	case "builtin":
+		return json.Unmarshal(data, &v.Builtin)
+	case "github":
+		return json.Unmarshal(data, &v.Github)
+	case "gitlab":
+		return json.Unmarshal(data, &v.Gitlab)
+	case "http-header":
+		return json.Unmarshal(data, &v.HttpHeader)
+	case "openidconnect":
+		return json.Unmarshal(data, &v.Openidconnect)
+	case "saml":
+		return json.Unmarshal(data, &v.Saml)
+	}
+	return fmt.Errorf("tagged union type must have a %q property whose value is one of %s", "type", []string{"builtin", "saml", "openidconnect", "http-header", "github", "gitlab"})
+}
+
+// BitbucketServerConnection description: Configuration for a connection to Bitbucket Server.
+type BitbucketServerConnection struct {
+	Certificate                 string                         `json:"certificate,omitempty"`
+	Exclude                     []*ExcludedBitbucketServerRepo `json:"exclude,omitempty"`
+	ExcludePersonalRepositories bool                           `json:"excludePersonalRepositories,omitempty"`
+	GitURLType                  string                         `json:"gitURLType,omitempty"`
+	InitialRepositoryEnablement bool                           `json:"initialRepositoryEnablement,omitempty"`
+	Password                    string                         `json:"password,omitempty"`
+	Repos                       []string                       `json:"repos,omitempty"`
+	RepositoryPathPattern       string                         `json:"repositoryPathPattern,omitempty"`
+	RepositoryQuery             []string                       `json:"repositoryQuery"`
+	Token                       string                         `json:"token,omitempty"`
+	Url                         string                         `json:"url"`
+	Username                    string                         `json:"username"`
+}
+
+// BuiltinAuthProvider description: Configures the builtin username-password authentication provider.
+type BuiltinAuthProvider struct {
+	AllowSignup bool   `json:"allowSignup,omitempty"`
+	Type        string `json:"type"`
 }
 
 // CriticalConfiguration description: Critical configuration for a Sourcegraph site.
 type CriticalConfiguration struct {
-	AuthUserOrgMap map[string][]string `json:"auth.userOrgMap,omitempty"`
+	AuthDisableUsernameChanges bool                `json:"auth.disableUsernameChanges,omitempty"`
+	AuthEnableUsernameChanges  bool                `json:"auth.enableUsernameChanges,omitempty"`
+	AuthProviders              []AuthProviders     `json:"auth.providers,omitempty"`
+	AuthPublic                 bool                `json:"auth.public,omitempty"`
+	AuthSessionExpiry          string              `json:"auth.sessionExpiry,omitempty"`
+	AuthUserOrgMap             map[string][]string `json:"auth.userOrgMap,omitempty"`
+	ExternalURL                string              `json:"externalURL,omitempty"`
+	HtmlBodyBottom             string              `json:"htmlBodyBottom,omitempty"`
+	HtmlBodyTop                string              `json:"htmlBodyTop,omitempty"`
+	HtmlHeadBottom             string              `json:"htmlHeadBottom,omitempty"`
+	HtmlHeadTop                string              `json:"htmlHeadTop,omitempty"`
+	LicenseKey                 string              `json:"licenseKey,omitempty"`
+	LightstepAccessToken       string              `json:"lightstepAccessToken,omitempty"`
+	LightstepProject           string              `json:"lightstepProject,omitempty"`
+	Log                        *Log                `json:"log,omitempty"`
+	UpdateChannel              string              `json:"update.channel,omitempty"`
+	UseJaeger                  bool                `json:"useJaeger,omitempty"`
+}
+type ExcludedBitbucketServerRepo struct {
+	Id      int    `json:"id,omitempty"`
+	Name    string `json:"name,omitempty"`
+	Pattern string `json:"pattern,omitempty"`
+}
+
+// GitHubAuthProvider description: Configures the GitHub (or GitHub Enterprise) OAuth authentication provider for SSO. In addition to specifying this configuration object, you must also create a OAuth App on your GitHub instance: https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/. When a user signs into Sourcegraph or links their GitHub account to their existing Sourcegraph account, GitHub will prompt the user for the repo scope.
+type GitHubAuthProvider struct {
+	AllowSignup  bool   `json:"allowSignup,omitempty"`
+	ClientID     string `json:"clientID"`
+	ClientSecret string `json:"clientSecret"`
+	DisplayName  string `json:"displayName,omitempty"`
+	Type         string `json:"type"`
+	Url          string `json:"url,omitempty"`
 }
 
 // GitHubConnection description: Configuration for a connection to GitHub or GitHub Enterprise.
 type GitHubConnection struct {
 	Url string `json:"url"`
 }
+
+// GitLabAuthProvider description: Configures the GitLab OAuth authentication provider for SSO. In addition to specifying this configuration object, you must also create a OAuth App on your GitLab instance: https://docs.gitlab.com/ee/integration/oauth_provider.html. The application should have `api` and `read_user` scopes and the callback URL set to the concatenation of your Sourcegraph instance URL and "/.auth/gitlab/callback".
+type GitLabAuthProvider struct {
+	ClientID     string `json:"clientID"`
+	ClientSecret string `json:"clientSecret"`
+	DisplayName  string `json:"displayName,omitempty"`
+	Type         string `json:"type"`
+	Url          string `json:"url,omitempty"`
+}
+
+// HTTPHeaderAuthProvider description: Configures the HTTP header authentication provider (which authenticates users by consulting an HTTP request header set by an authentication proxy such as https://github.com/bitly/oauth2_proxy).
+type HTTPHeaderAuthProvider struct {
+	StripUsernameHeaderPrefix string `json:"stripUsernameHeaderPrefix,omitempty"`
+	Type                      string `json:"type"`
+	UsernameHeader            string `json:"usernameHeader"`
+}
+
+// Log description: Configuration for logging and alerting, including to external services.
+type Log struct {
+	Sentry *Sentry `json:"sentry,omitempty"`
+}
+
+// OpenIDConnectAuthProvider description: Configures the OpenID Connect authentication provider for SSO.
+type OpenIDConnectAuthProvider struct {
+	ClientID           string `json:"clientID"`
+	ClientSecret       string `json:"clientSecret"`
+	ConfigID           string `json:"configID,omitempty"`
+	DisplayName        string `json:"displayName,omitempty"`
+	Issuer             string `json:"issuer"`
+	RequireEmailDomain string `json:"requireEmailDomain,omitempty"`
+	Type               string `json:"type"`
+}
+
+// SAMLAuthProvider description: Configures the SAML authentication provider for SSO.
+//
+// Note: if you are using IdP-initiated login, you must have *at most one* SAMLAuthProvider in the `auth.providers` array.
+type SAMLAuthProvider struct {
+	ConfigID                                 string `json:"configID,omitempty"`
+	DisplayName                              string `json:"displayName,omitempty"`
+	IdentityProviderMetadata                 string `json:"identityProviderMetadata,omitempty"`
+	IdentityProviderMetadataURL              string `json:"identityProviderMetadataURL,omitempty"`
+	InsecureSkipAssertionSignatureValidation bool   `json:"insecureSkipAssertionSignatureValidation,omitempty"`
+	NameIDFormat                             string `json:"nameIDFormat,omitempty"`
+	ServiceProviderCertificate               string `json:"serviceProviderCertificate,omitempty"`
+	ServiceProviderIssuer                    string `json:"serviceProviderIssuer,omitempty"`
+	ServiceProviderPrivateKey                string `json:"serviceProviderPrivateKey,omitempty"`
+	SignRequests                             *bool  `json:"signRequests,omitempty"`
+	Type                                     string `json:"type"`
+}
 type SearchSavedQueries struct {
 	Description string `json:"description,omitempty"`
 	Key         string `json:"key,omitempty"`
 	Query       string `json:"query,omitempty"`
+}
+
+// Sentry description: Configuration for Sentry
+type Sentry struct {
+	Dsn string `json:"dsn,omitempty"`
 }
 
 // Settings description: Configuration settings for users and organizations on Sourcegraph.
