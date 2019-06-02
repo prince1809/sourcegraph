@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "github.schema.json#",
+  "title": "GitHubConnection",
+  "description": "Configuration for a connection to GitHub or GitHub Enterprise.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "url",
+    "token",
+    "repositoryQuery"
+  ],
+  "properties": {
+    "url": {
+      "description": "URL of a Github instance such as https://github.com",
+      "type": "string",
+      "not": {
+        "type": "string",
+        "pattern": "example\\.com"
+      },
+      "pattern": "^https?://",
+      "examples": [
+        "https://github.com",
+        "https://github-enterprise.example.com"
+      ]
+    }
+  }
+}

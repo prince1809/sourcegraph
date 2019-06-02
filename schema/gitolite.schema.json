@@ -1,0 +1,9 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "gitolite.schema.json#",
+  "title": "GitoliteConnection",
+  "description": "Configuration for a connection to Gitolite.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["prefix", "host"]
+}

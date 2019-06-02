@@ -6,3 +6,28 @@ package schema
 type AWSCodeCommitConnection struct {
 	Region interface{} `json:"region"`
 }
+
+// CriticalConfiguration description: Critical configuration for a Sourcegraph site.
+type CriticalConfiguration struct {
+	AuthUserOrgMap map[string][]string `json:"auth.userOrgMap,omitempty"`
+}
+
+// GitHubConnection description: Configuration for a connection to GitHub or GitHub Enterprise.
+type GitHubConnection struct {
+	Url string `json:"url"`
+}
+type SearchSavedQueries struct {
+	Description string `json:"description,omitempty"`
+	Key         string `json:"key,omitempty"`
+	Query       string `json:"query,omitempty"`
+}
+
+// Settings description: Configuration settings for users and organizations on Sourcegraph.
+type Settings struct {
+	SearchSavedQueries []*SearchSavedQueries `json:"search.savedQueries,omitempty"`
+}
+
+// SiteConfiguration description: Configuration for a Sourcegraph site.
+type SiteConfiguration struct {
+	DontIncludeSymbolResultsByDefault bool `json:"dontIncludeSymbolResultsByDefault,omitempty"`
+}
