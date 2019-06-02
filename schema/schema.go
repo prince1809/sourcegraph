@@ -17,6 +17,11 @@ type AWSCodeCommitConnection struct {
 	SecretAccessKey             string `json:"secretAccessKey"`
 }
 
+// AuthAccessTokens description: Settings for access tokens, which enable external tools to access the Sourcegraph API with the privileges of the user.
+type AuthAccessTokens struct {
+	Allow string `json:"allow,omitempty"`
+}
+
 // AuthProviderCommon description: Common properties for authentication providers.
 type AuthProviderCommon struct {
 	DisplayName string `json:"displayName,omitempty"`
@@ -90,11 +95,30 @@ type BitbucketServerConnection struct {
 	Url                         string                         `json:"url"`
 	Username                    string                         `json:"username"`
 }
+type BrandAssets struct {
+	Logo   string `json:"logo,omitempty"`
+	Symbol string `json:"symbol,omitempty"`
+}
+
+// Branding description: Customize Sourcegraph homepage logo and search icon.
+//
+// Only available in Sourcegraph Enterprise.
+type Branding struct {
+	Dark    *BrandAssets `json:"dark,omitempty"`
+	Favicon string       `json:"favicon,omitempty"`
+	Light   *BrandAssets `json:"light,omitempty"`
+}
 
 // BuiltinAuthProvider description: Configures the builtin username-password authentication provider.
 type BuiltinAuthProvider struct {
 	AllowSignup bool   `json:"allowSignup,omitempty"`
 	Type        string `json:"type"`
+}
+
+// CloneURLToRepositoryName description: Describes a mapping from clone URL to repository name. The `from` field contains a regular expression with named capturing groups. The `to` field contains a template string that references capturing group names. For instance, if `from` is "^../(?P<name>\w+)$" and `to` is "github.com/user/{name}", the clone URL "../myRepository" would be mapped to the repository name "github.com/user/myRepository".
+type CloneURLToRepositoryName struct {
+	From string `json:"from"`
+	To   string `json:"to"`
 }
 
 // CriticalConfiguration description: Critical configuration for a Sourcegraph site.
@@ -117,10 +141,28 @@ type CriticalConfiguration struct {
 	UpdateChannel              string              `json:"update.channel,omitempty"`
 	UseJaeger                  bool                `json:"useJaeger,omitempty"`
 }
+
+// Discussions description: Configures Sourcegraph code discussions.
+type Discussions struct {
+	AbuseEmails     []string `json:"abuseEmails,omitempty"`
+	AbuseProtection bool     `json:"abuseProtection,omitempty"`
+}
 type ExcludedBitbucketServerRepo struct {
 	Id      int    `json:"id,omitempty"`
 	Name    string `json:"name,omitempty"`
 	Pattern string `json:"pattern,omitempty"`
+}
+
+// ExperimentalFeatures description: Experimental features to enable or disable. Features that are now enabled by default are marked as deprecated.
+type ExperimentalFeatures struct {
+	Discussions string `json:"discussions,omitempty"`
+}
+
+// Extensions description: Configures Sourcegraph extensions.
+type Extensions struct {
+	AllowRemoteExtensions []string    `json:"allowRemoteExtensions,omitempty"`
+	Disabled              *bool       `json:"disabled,omitempty"`
+	RemoteRegistry        interface{} `json:"remoteRegistry,omitempty"`
 }
 
 // GitHubAuthProvider description: Configures the GitHub (or GitHub Enterprise) OAuth authentication provider for SSO. In addition to specifying this configuration object, you must also create a OAuth App on your GitHub instance: https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/. When a user signs into Sourcegraph or links their GitHub account to their existing Sourcegraph account, GitHub will prompt the user for the repo scope.
@@ -154,9 +196,22 @@ type HTTPHeaderAuthProvider struct {
 	UsernameHeader            string `json:"usernameHeader"`
 }
 
+// IMAPServerConfig description: Optional. The IMAP server used to retrieve emails (such as code discussion reply emails).
+type IMAPServerConfig struct {
+	Host     string `json:"host"`
+	Password string `json:"password,omitempty"`
+	Port     int    `json:"port"`
+	Username string `json:"username,omitempty"`
+}
+
 // Log description: Configuration for logging and alerting, including to external services.
 type Log struct {
 	Sentry *Sentry `json:"sentry,omitempty"`
+}
+type Notice struct {
+	Dismissible bool   `json:"dismissible,omitempty"`
+	Location    string `json:"location"`
+	Message     string `json:"message"`
 }
 
 // OpenIDConnectAuthProvider description: Configures the OpenID Connect authentication provider for SSO.
@@ -168,6 +223,11 @@ type OpenIDConnectAuthProvider struct {
 	Issuer             string `json:"issuer"`
 	RequireEmailDomain string `json:"requireEmailDomain,omitempty"`
 	Type               string `json:"type"`
+}
+
+// ParentSourcegraph description: URL to fetch unreachable repository details from. Defaults to "https://sourcegraph.com"
+type ParentSourcegraph struct {
+	Url string `json:"url,omitempty"`
 }
 
 // SAMLAuthProvider description: Configures the SAML authentication provider for SSO.
@@ -186,10 +246,29 @@ type SAMLAuthProvider struct {
 	SignRequests                             *bool  `json:"signRequests,omitempty"`
 	Type                                     string `json:"type"`
 }
+
+// SMTPServerConfig description: The SMTP server used to send transactional emails (such as email verifications, reset-password emails, and notifications).
+type SMTPServerConfig struct {
+	Authentication string `json:"authentication"`
+	Domain         string `json:"domain,omitempty"`
+	Host           string `json:"host"`
+	Password       string `json:"password,omitempty"`
+	Port           int    `json:"port"`
+	Username       string `json:"username,omitempty"`
+}
 type SearchSavedQueries struct {
+	Description    string `json:"description"`
+	Key            string `json:"key"`
+	Notify         bool   `json:"notify,omitempty"`
+	NotifySlack    bool   `json:"notifySlack,omitempty"`
+	Query          string `json:"query"`
+	ShowOnHomepage bool   `json:"showOnHomepage,omitempty"`
+}
+type SearchScope struct {
 	Description string `json:"description,omitempty"`
-	Key         string `json:"key,omitempty"`
-	Query       string `json:"query,omitempty"`
+	Id          string `json:"id,omitempty"`
+	Name        string `json:"name"`
+	Value       string `json:"value"`
 }
 
 // Sentry description: Configuration for Sentry
@@ -199,10 +278,43 @@ type Sentry struct {
 
 // Settings description: Configuration settings for users and organizations on Sourcegraph.
 type Settings struct {
-	SearchSavedQueries []*SearchSavedQueries `json:"search.savedQueries,omitempty"`
+	Extensions             map[string]bool           `json:"extensions,omitempty"`
+	Motd                   []string                  `json:"motd,omitempty"`
+	Notices                []*Notice                 `json:"notices,omitempty"`
+	NotificationsSlack     *SlackNotificationsConfig `json:"notifications.slack,omitempty"`
+	SearchContextLines     int                       `json:"search.contextLines,omitempty"`
+	SearchRepositoryGroups map[string][]string       `json:"search.repositoryGroups,omitempty"`
+	SearchSavedQueries     []*SearchSavedQueries     `json:"search.savedQueries,omitempty"`
+	SearchScopes           []*SearchScope            `json:"search.scopes,omitempty"`
 }
 
 // SiteConfiguration description: Configuration for a Sourcegraph site.
 type SiteConfiguration struct {
-	DontIncludeSymbolResultsByDefault bool `json:"dontIncludeSymbolResultsByDefault,omitempty"`
+	AuthAccessTokens                  *AuthAccessTokens           `json:"auth.accessTokens,omitempty"`
+	Branding                          *Branding                   `json:"branding,omitempty"`
+	CorsOrigin                        string                      `json:"corsOrigin,omitempty"`
+	DisableAutoGitUpdates             bool                        `json:"disableAutoGitUpdates,omitempty"`
+	DisableBuiltInSearches            bool                        `json:"disableBuiltInSearches,omitempty"`
+	DisablePublicRepoRedirects        bool                        `json:"disablePublicRepoRedirects,omitempty"`
+	Discussions                       *Discussions                `json:"discussions,omitempty"`
+	DontIncludeSymbolResultsByDefault bool                        `json:"dontIncludeSymbolResultsByDefault,omitempty"`
+	EmailAddress                      string                      `json:"email.address,omitempty"`
+	EmailImap                         *IMAPServerConfig           `json:"email.imap,omitempty"`
+	EmailSmtp                         *SMTPServerConfig           `json:"email.smtp,omitempty"`
+	ExperimentalFeatures              *ExperimentalFeatures       `json:"experimentalFeatures,omitempty"`
+	Extensions                        *Extensions                 `json:"extensions,omitempty"`
+	GitCloneURLToRepositoryName       []*CloneURLToRepositoryName `json:"git.cloneURLToRepositoryName,omitempty"`
+	GitMaxConcurrentClones            int                         `json:"gitMaxConcurrentClones,omitempty"`
+	GithubClientID                    string                      `json:"githubClientID,omitempty"`
+	GithubClientSecret                string                      `json:"githubClientSecret,omitempty"`
+	MaxReposToSearch                  int                         `json:"maxReposToSearch,omitempty"`
+	ParentSourcegraph                 *ParentSourcegraph          `json:"parentSourcegraph,omitempty"`
+	RepoListUpdateInterval            int                         `json:"repoListUpdateInterval,omitempty"`
+	SearchIndexEnabled                *bool                       `json:"search.index.enabled,omitempty"`
+	SearchLargeFiles                  []string                    `json:"search.largeFiles,omitempty"`
+}
+
+// SlackNotificationsConfig description: Configuration for sending notifications to Slack.
+type SlackNotificationsConfig struct {
+	WebhookURL string `json:"webhookURL"`
 }
