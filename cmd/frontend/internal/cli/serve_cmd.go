@@ -53,6 +53,7 @@ func Main() error {
 	}
 	globals.ConfigurationServerFrontendOnly = conf.InitConfigurationServerFrontendOnly(&configurationSource{})
 	conf.MustValidateDefaults()
+	handleConfigOverrides()
 
 
 	if printLogo {

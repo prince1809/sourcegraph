@@ -5,10 +5,19 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prince1809/sourcegraph/pkg/conf/conftypes"
 	"github.com/prince1809/sourcegraph/pkg/db/confdb"
+	"github.com/sourcegraph/sourcegraph/pkg/conf"
 	"net/url"
 	"os"
 	"os/user"
 )
+
+// handleConfigOverrides handles allowing dev environments to forcibly override
+// the configuration in the database upon startup. This is used to e.g. ensure
+// dev environments have a consistent configuration and to load secrets from
+// a separate private repository
+func handleConfigOverrides() {
+	if conf.IsDev
+}
 
 type configurationSource struct{}
 
@@ -37,7 +46,6 @@ func (configurationSource) Write(ctx context.Context, data conftypes.RawUnified)
 	//critical, err := confdb.
 	panic("implement me")
 }
-
 
 func postgresDSN() string {
 	username := ""
