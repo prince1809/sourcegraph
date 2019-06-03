@@ -3,9 +3,11 @@ package cli
 import (
 	"context"
 	"github.com/pkg/errors"
+	"github.com/prince1809/sourcegraph/pkg/conf"
 	"github.com/prince1809/sourcegraph/pkg/conf/conftypes"
 	"github.com/prince1809/sourcegraph/pkg/db/confdb"
-	"github.com/sourcegraph/sourcegraph/pkg/conf"
+	"io/ioutil"
+	"log"
 	"net/url"
 	"os"
 	"os/user"
@@ -16,7 +18,18 @@ import (
 // dev environments have a consistent configuration and to load secrets from
 // a separate private repository
 func handleConfigOverrides() {
-	if conf.IsDev
+	if conf.IsDev(conf.DeployType()) {
+		raw := conf.Raw()
+
+		devOverrideCriticalConfig := os.Getenv("DEV_OVERRIDE_CRITICAL_CONFIG")
+		if devOverrideCriticalConfig != "" {
+			critical, err := ioutil.ReadFile(devOverrideCriticalConfig)
+			if err != nil {
+				log.Fatal(err)
+			}
+			raw.Critical = string(critical)
+		}
+	}
 }
 
 type configurationSource struct{}

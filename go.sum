@@ -292,6 +292,7 @@ github.com/sourcegraph/jsonschemadoc v0.0.0-20190214000648-1850b818f08c h1:MXlcJ
 github.com/sourcegraph/jsonschemadoc v0.0.0-20190214000648-1850b818f08c/go.mod h1:ovHiFoMDwf4nf7ynAc7lIhD4w0nc/6tO27DtVzqYrTQ=
 github.com/sourcegraph/jsonx v0.0.0-20190114210550-ba8cb36a8614 h1:MrlKMpoGse4bCneDoK/c+ZbPGqOP5Hme5ulatc8smbQ=
 github.com/sourcegraph/jsonx v0.0.0-20190114210550-ba8cb36a8614/go.mod h1:7jkSQ2sdxwXMaIDxKJotTt+hwKnT9b/wbJFU7/ObUEY=
+github.com/sourcegraph/sourcegraph v3.0.2+incompatible h1:gc6w3jctxdgSvUf8MuZFJt4ykf79SJ+IT4EDvSIc+rY=
 github.com/sourcegraph/zoekt v0.0.0-20190116094554-c742ce874aa3 h1:vAUL5cXaRT43gdK4LStxgvS5gfVJSrEDgQ+VbrxgmzU=
 github.com/sourcegraph/zoekt v0.0.0-20190116094554-c742ce874aa3/go.mod h1:WvXuHA1Bqi7FB9mKYXuvR2Tj27E6EsP/kZydqx7Vzts=
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
