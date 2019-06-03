@@ -152,6 +152,10 @@ type ExcludedBitbucketServerRepo struct {
 	Name    string `json:"name,omitempty"`
 	Pattern string `json:"pattern,omitempty"`
 }
+type ExcludedGitLabProject struct {
+	Id   int    `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
+}
 
 // ExperimentalFeatures description: Experimental features to enable or disable. Features that are now enabled by default are marked as deprecated.
 type ExperimentalFeatures struct {
@@ -163,6 +167,12 @@ type Extensions struct {
 	AllowRemoteExtensions []string    `json:"allowRemoteExtensions,omitempty"`
 	Disabled              *bool       `json:"disabled,omitempty"`
 	RemoteRegistry        interface{} `json:"remoteRegistry,omitempty"`
+}
+type ExternalIdentity struct {
+	AuthProviderID   string `json:"authProviderID"`
+	AuthProviderType string `json:"authProviderType"`
+	GitlabProvider   string `json:"gitlabProvider"`
+	Type             string `json:"type"`
 }
 
 // GitHubAuthProvider description: Configures the GitHub (or GitHub Enterprise) OAuth authentication provider for SSO. In addition to specifying this configuration object, you must also create a OAuth App on your GitHub instance: https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/. When a user signs into Sourcegraph or links their GitHub account to their existing Sourcegraph account, GitHub will prompt the user for the repo scope.
@@ -189,6 +199,30 @@ type GitLabAuthProvider struct {
 	Url          string `json:"url,omitempty"`
 }
 
+// GitLabAuthorization description: If non-null, enforces GitLab repository permissions. This requires that there be an item in the `auth.providers` field of type "gitlab" with the same `url` field as specified in this `GitLabConnection`.
+type GitLabAuthorization struct {
+	IdentityProvider IdentityProvider `json:"identityProvider"`
+	Ttl              string           `json:"ttl,omitempty"`
+}
+
+// GitLabConnection description: Configuration for a connection to GitLab (GitLab.com or GitLab self-managed).
+type GitLabConnection struct {
+	Authorization               *GitLabAuthorization     `json:"authorization,omitempty"`
+	Certificate                 string                   `json:"certificate,omitempty"`
+	Exclude                     []*ExcludedGitLabProject `json:"exclude,omitempty"`
+	GitURLType                  string                   `json:"gitURLType,omitempty"`
+	InitialRepositoryEnablement bool                     `json:"initialRepositoryEnablement,omitempty"`
+	ProjectQuery                []string                 `json:"projectQuery"`
+	Projects                    []*GitLabProject         `json:"projects,omitempty"`
+	RepositoryPathPattern       string                   `json:"repositoryPathPattern,omitempty"`
+	Token                       string                   `json:"token"`
+	Url                         string                   `json:"url"`
+}
+type GitLabProject struct {
+	Id   int    `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
+}
+
 // HTTPHeaderAuthProvider description: Configures the HTTP header authentication provider (which authenticates users by consulting an HTTP request header set by an authentication proxy such as https://github.com/bitly/oauth2_proxy).
 type HTTPHeaderAuthProvider struct {
 	StripUsernameHeaderPrefix string `json:"stripUsernameHeaderPrefix,omitempty"`
@@ -204,6 +238,43 @@ type IMAPServerConfig struct {
 	Username string `json:"username,omitempty"`
 }
 
+// IdentityProvider description: The source of identity to use when computing permissions. This defines how to compute the GitLab identity to use for a given Sourcegraph user.
+type IdentityProvider struct {
+	Oauth    *OAuthIdentity
+	Username *UsernameIdentity
+	External *ExternalIdentity
+}
+
+func (v IdentityProvider) MarshalJSON() ([]byte, error) {
+	if v.Oauth != nil {
+		return json.Marshal(v.Oauth)
+	}
+	if v.Username != nil {
+		return json.Marshal(v.Username)
+	}
+	if v.External != nil {
+		return json.Marshal(v.External)
+	}
+	return nil, errors.New("tagged union type must have exactly 1 non-nil field value")
+}
+func (v *IdentityProvider) UnmarshalJSON(data []byte) error {
+	var d struct {
+		DiscriminantProperty string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &d); err != nil {
+		return err
+	}
+	switch d.DiscriminantProperty {
+	case "external":
+		return json.Unmarshal(data, &v.External)
+	case "oauth":
+		return json.Unmarshal(data, &v.Oauth)
+	case "username":
+		return json.Unmarshal(data, &v.Username)
+	}
+	return fmt.Errorf("tagged union type must have a %q property whose value is one of %s", "type", []string{"oauth", "username", "external"})
+}
+
 // Log description: Configuration for logging and alerting, including to external services.
 type Log struct {
 	Sentry *Sentry `json:"sentry,omitempty"`
@@ -212,6 +283,9 @@ type Notice struct {
 	Dismissible bool   `json:"dismissible,omitempty"`
 	Location    string `json:"location"`
 	Message     string `json:"message"`
+}
+type OAuthIdentity struct {
+	Type string `json:"type"`
 }
 
 // OpenIDConnectAuthProvider description: Configures the OpenID Connect authentication provider for SSO.
@@ -317,4 +391,7 @@ type SiteConfiguration struct {
 // SlackNotificationsConfig description: Configuration for sending notifications to Slack.
 type SlackNotificationsConfig struct {
 	WebhookURL string `json:"webhookURL"`
+}
+type UsernameIdentity struct {
+	Type string `json:"type"`
 }

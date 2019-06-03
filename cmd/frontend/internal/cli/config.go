@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"github.com/pkg/errors"
+	"github.com/prince1809/sourcegraph/cmd/frontend/db"
 	"github.com/prince1809/sourcegraph/pkg/conf"
 	"github.com/prince1809/sourcegraph/pkg/conf/conftypes"
 	"github.com/prince1809/sourcegraph/pkg/db/confdb"
@@ -29,7 +30,29 @@ func handleConfigOverrides() {
 			}
 			raw.Critical = string(critical)
 		}
+
+		devOverrideSiteConfig := os.Getenv("DEV_OVERRIDE_SITE_CONFIG")
+		if devOverrideSiteConfig != "" {
+			site, err := ioutil.ReadFile(devOverrideSiteConfig)
+			if err != nil {
+				log.Fatal(err)
+			}
+			raw.Site = string(site)
+		}
+
+		if devOverrideCriticalConfig != "" || devOverrideSiteConfig != "" {
+			err := (&configurationSource{}).Write(context.Background(), raw)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		devOverrideExtSvcConfig := os.Getenv("DEV_OVERRIDE_EXTSVC_CONFIG")
+		if devOverrideExtSvcConfig != "" {
+			existing, err := db.ExternalServices.List(context.Background(), &db.ExternalServicesListOptions{})
+		}
 	}
+
 }
 
 type configurationSource struct{}
