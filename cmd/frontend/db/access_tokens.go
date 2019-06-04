@@ -24,10 +24,13 @@ var ErrAccessTokenNotFound = errors.New("access token not found")
 // accessTokens implements autocert.Cache
 type accessTokens struct{}
 
-
 // Create creates an access token for the specified user. The secret token value itself is
 // returned. The caller is responsible for presenting this value to the end user; Sourcegraph does
 // not retain it (only a hash of it).
 //
 // The secret token value is a long random string; it is what API client must provide to
 // authenticate their requests.
+
+type MockAccessTokens struct {
+	Create func(subjectUserID int32, scopes []string, note string, creatorUserID int32) (id int64, token string, err error)
+}

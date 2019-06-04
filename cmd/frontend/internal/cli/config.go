@@ -2,11 +2,15 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/prince1809/sourcegraph/cmd/frontend/db"
+	"github.com/prince1809/sourcegraph/cmd/frontend/types"
 	"github.com/prince1809/sourcegraph/pkg/conf"
 	"github.com/prince1809/sourcegraph/pkg/conf/conftypes"
 	"github.com/prince1809/sourcegraph/pkg/db/confdb"
+	"github.com/sourcegraph/sourcegraph/pkg/jsonc"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -49,7 +53,37 @@ func handleConfigOverrides() {
 
 		devOverrideExtSvcConfig := os.Getenv("DEV_OVERRIDE_EXTSVC_CONFIG")
 		if devOverrideExtSvcConfig != "" {
-			existing, err := db.ExternalServices.List(context.Background(), &db.ExternalServicesListOptions{})
+			existing, err := db.ExternalServices.List(context.Background(), db.ExternalServicesListOptions{})
+			if err != nil {
+				log.Fatal(err)
+			}
+			if len(existing) > 0 {
+				return
+			}
+
+			extsvc, err := ioutil.ReadFile(devOverrideExtSvcConfig)
+			if err != nil {
+				log.Fatal(err)
+			}
+			var configs map[string][]*json.RawMessage
+			if err := jsonc.Unmarshal(string(extsvc), &configs); err != nil {
+				log.Fatal(err)
+			}
+			for key, cfgs := range configs {
+				for i, cfg := range cfgs {
+					marshaledCfg, err := json.MarshalIndent(cfg, "", "  ")
+					if err != nil {
+						log.Fatal(err)
+					}
+					if err := db.ExternalServices.Create(context.Background(), &types.ExternalService{
+						Kind:        key,
+						DisplayName: fmt.Sprintf("Dev %s #%d", key, i+1),
+						Config:      string(marshaledCfg),
+					}); err != nil {
+						log.Fatal(err)
+					}
+				}
+			}
 		}
 	}
 
