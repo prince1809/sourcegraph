@@ -1,13 +1,16 @@
 package db
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"github.com/hashicorp/go-multierror"
 	"github.com/keegancsmith/sqlf"
 	"github.com/pkg/errors"
 	"github.com/prince1809/sourcegraph/cmd/frontend/types"
 	"github.com/prince1809/sourcegraph/pkg/conf"
 	"github.com/prince1809/sourcegraph/pkg/db/dbconn"
+	"github.com/prince1809/sourcegraph/pkg/jsonc"
 	"github.com/prince1809/sourcegraph/schema"
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -68,8 +71,38 @@ func (e *ExternalServicesStore) ValidateConfig(kind, config string, ps []schema.
 	if err != nil {
 		return errors.Wrapf(err, "failed to compile schema for external service of kind %q", kind)
 	}
+
+	normalized, err := jsonc.Parse(config)
+	if err != nil {
+		return errors.Wrapf(err, "failed to normalize JSON")
+	}
+
+	res, err := sc.Validate(gojsonschema.NewBytesLoader(normalized))
+	if err != nil {
+		return errors.Wrapf(err, "failed to validate config against schema")
+	}
+
+	errs := &multierror.Error{
+		ErrorFormat: func(errs []error) string {
+			// Markdown bullet list of error messages.
+			var buf bytes.Buffer
+			for _, err := range errs {
+				fmt.Fprintf(&buf, "- %s\n", err)
+			}
+			return buf.String()
+		},
+	}
+	for _, err := range res.Errors() {
+		errs = multierror.Append(errs, errors.New(err.String()))
+	}
+
+	// Extra validation not based on JSON schema.
+	switch kind {
+	case "GITHUB":
+
+	}
+	return multierror.Append(errs, err).ErrorOrNil()
 }
-func
 
 // Create creates a external service.
 //
