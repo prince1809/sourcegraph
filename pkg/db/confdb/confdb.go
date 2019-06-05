@@ -74,7 +74,7 @@ func CriticalGetLatest(ctx context.Context) (latest *CriticalConfig, err error) 
 	return (*CriticalConfig)(critical), err
 }
 
-func newTransaction(ctx context.Context) (tx queryTable, done func(), err error) {
+func newTransaction(ctx context.Context) (tx queryable, done func(), err error) {
 	rtx, err := dbconn.Global.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, nil, err
@@ -92,7 +92,7 @@ func newTransaction(ctx context.Context) (tx queryTable, done func(), err error)
 	}, nil
 }
 
-func addDefault(ctx context.Context, tx queryTable, configType configType, contents string) (newLastID *int32, err error) {
+func addDefault(ctx context.Context, tx queryable, configType configType, contents string) (newLastID *int32, err error) {
 	latest, err := getLatest(ctx, tx, configType)
 	if err != nil {
 		return nil, err
@@ -110,7 +110,7 @@ func addDefault(ctx context.Context, tx queryTable, configType configType, conte
 	return &latest.ID, nil
 }
 
-func createIfUpToDate(ctx context.Context, tx queryTable, configType configType, lastID *int32, contents string) (latest *Config, err error) {
+func createIfUpToDate(ctx context.Context, tx queryable, configType configType, lastID *int32, contents string) (latest *Config, err error) {
 	// Validate JSON syntax before saving.
 	if _, errs := jsonx.Parse(contents, jsonx.ParseOptions{Comments: true, TrailingCommas: true}); len(errs) > 0 {
 		return nil, fmt.Errorf("invalid settings JSON: %v", errs)
@@ -138,7 +138,7 @@ func createIfUpToDate(ctx context.Context, tx queryTable, configType configType,
 	return &new, nil
 }
 
-func getLatest(ctx context.Context, tx queryTable, configType configType) (*Config, error) {
+func getLatest(ctx context.Context, tx queryable, configType configType) (*Config, error) {
 	q := sqlf.Sprintf("SELECT s.id, s.type, s.contents, s.created_at, s.updated_at FROM critical_and_site_config s WHERE type=%s ORDER BY id DESC LIMIT 1", configType)
 	rows, err := tx.QueryContext(ctx, q.Query(sqlf.PostgresBindVar), q.Args()...)
 	if err != nil {
@@ -149,6 +149,7 @@ func getLatest(ctx context.Context, tx queryTable, configType configType) (*Conf
 		return nil, err
 	}
 	if len(versions) != 1 {
+		fmt.Println("**********:", len(versions))
 		// No config has been written yet.
 		return nil, nil
 	}
@@ -164,6 +165,7 @@ func parseQueryRows(ctx context.Context, rows *sql.Rows) ([]*Config, error) {
 		if err != nil {
 			return nil, err
 		}
+		fmt.Println("XXXXXXXXXX:", f.ID, f.Type, f.Contents, f.CreatedAt, f.CreatedAt)
 		versions = append(versions, &f)
 	}
 	if err := rows.Err(); err != nil {
@@ -174,7 +176,7 @@ func parseQueryRows(ctx context.Context, rows *sql.Rows) ([]*Config, error) {
 
 // queryTable allows us to reuse the same logic for certain operations both
 // inside and outside an explicit transactions.
-type queryTable interface {
+type queryable interface {
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
 }

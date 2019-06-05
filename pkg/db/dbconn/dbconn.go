@@ -87,7 +87,7 @@ func openDBWithStartupWait(dataSource string) (db *sql.DB, err error) {
 	startupDeadline := time.Now().Add(startupTimeout)
 	for {
 		if time.Now().After(startupDeadline) {
-			return nil, fmt.Errorf("database did not start up withing %s (%v)", startupTimeout, err)
+			return nil, fmt.Errorf("database did not start up within %s (%v)", startupTimeout, err)
 		}
 		db, err = Open(dataSource)
 		if err == nil {
