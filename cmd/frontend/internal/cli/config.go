@@ -91,7 +91,7 @@ func handleConfigOverrides() {
 
 type configurationSource struct{}
 
-func (configurationSource) Read(ctx context.Context) (conftypes.RawUnified, error) {
+func (c configurationSource) Read(ctx context.Context) (conftypes.RawUnified, error) {
 	critical, err := confdb.CriticalGetLatest(ctx)
 	if err != nil {
 		return conftypes.RawUnified{}, errors.Wrap(err, "confdb.CriticalGetLatest")
@@ -112,7 +112,7 @@ func (configurationSource) Read(ctx context.Context) (conftypes.RawUnified, erro
 	}, nil
 }
 
-func (configurationSource) Write(ctx context.Context, data conftypes.RawUnified) error {
+func (c configurationSource) Write(ctx context.Context, data conftypes.RawUnified) error {
 	//critical, err := confdb.
 	panic("implement me")
 }

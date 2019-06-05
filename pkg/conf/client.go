@@ -2,9 +2,13 @@ package conf
 
 import (
 	"context"
+	"github.com/labstack/gommon/log"
 	"github.com/pkg/errors"
 	"github.com/prince1809/sourcegraph/pkg/api"
 	"github.com/prince1809/sourcegraph/pkg/conf/conftypes"
+	"math/rand"
+	"net"
+	"net/url"
 	"sync"
 	"time"
 )
@@ -102,6 +106,25 @@ func (c *client) Watch(f func()) {
 	}()
 }
 
+// notifyWatchers runs all the callbacks registered via client.Watch() whenever
+// the configuration has changed.
+func (c *client) notifyWatchers() {
+	c.watchersMu.Lock()
+	defer c.watchersMu.Unlock()
+	for _, watcher := range c.watchers {
+		// Perform a non-blocking send.
+		//
+		// since the watcher channels that we are sending on have a
+		// buffer of 1, it is guaranteed the watcher will
+		// reconsider the config at some point in the future even
+		// if this send fails.
+		select {
+		case watcher <- struct{}{}:
+		default:
+		}
+	}
+}
+
 type continuousUpdateOptions struct {
 	// delayBeforeUnreachableLog is how long to wait before logging an error upon initial startup
 	// due to the frontend being unreachable. It is used to avoid log spam when other services (that
@@ -118,7 +141,44 @@ type continuousUpdateOptions struct {
 // The optOnlySetByTests parameter is ONLY customized by tests. ALl callers in main code should pass
 // nil (so that the same defaults are used).
 func (c *client) continuouslyUpdate(optOnlySetByTests *continuousUpdateOptions) {
+	opt := optOnlySetByTests
+	if opt == nil {
+		// Apply defaults
+		opt = &continuousUpdateOptions{
+			// This needs to be long enough to allow the frontend to fully migrate the PostgreSQL
+			// database in most cases, to avoid log spam when running sourcegraph/server for the
+			// first time
+			delayBeforeUnreachableLog: 15 * time.Second,
+			log:                       log.Printf,
+			sleep: func() {
+				jitter := time.Duration(rand.Int63n(5 * int64(time.Second)))
+				time.Sleep(jitter)
+			},
+		}
+	}
 
+	isFrontendUnreachableError := func(err error) bool {
+		if urlErr, ok := errors.Cause(err).(*url.Error); ok {
+			if netErr, ok := urlErr.Err.(*net.OpError); ok && netErr.Op == "dial" {
+				return true
+			}
+		}
+		return false
+	}
+
+	start := time.Now()
+	for {
+		err := c.fetchAndUpdate()
+		if err != nil {
+			// Suppress log message for errors caused by the frontend being unreachable until we've
+			// given the frontend enough time to initialize (in case of other servies start up before
+			// the frontend), to reduce log spam.
+			if time.Since(start) > opt.delayBeforeUnreachableLog || !isFrontendUnreachableError(err) {
+				opt.log("received error during background config update, err: %s", err)
+			}
+		}
+		opt.sleep()
+	}
 }
 
 func (c *client) fetchAndUpdate() error {
@@ -142,7 +202,7 @@ func (c *client) fetchAndUpdate() error {
 	}
 
 	if configChange.Changed {
-		//c.NotifyWatchers()
+		c.notifyWatchers()
 	}
 	return nil
 

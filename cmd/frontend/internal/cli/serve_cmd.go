@@ -52,6 +52,7 @@ func Main() error {
 		log.Fatal(err)
 	}
 	globals.ConfigurationServerFrontendOnly = conf.InitConfigurationServerFrontendOnly(&configurationSource{})
+	fmt.Println("validate config")
 	conf.MustValidateDefaults()
 	handleConfigOverrides()
 

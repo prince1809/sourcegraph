@@ -14,6 +14,7 @@ import (
 	"github.com/prince1809/sourcegraph/pkg/jsonc"
 	"github.com/prince1809/sourcegraph/schema"
 	"github.com/xeipuuv/gojsonschema"
+	"net/url"
 	"time"
 )
 
@@ -123,7 +124,33 @@ func (e *ExternalServicesStore) ValidateConfig(kind, config string, ps []schema.
 	return multierror.Append(errs, err).ErrorOrNil()
 }
 
-// Ne
+// Neither our JSON schema library nor the Monaco editor we use supports
+// object dependencies well, so we must validate here that repo items
+// match the uri-reference format when url is set, instead of uri when
+// it isn't.
+func validateOtherExternalServiceConnection(c *schema.OtherExternalServiceConnection) error {
+	parseRepo := url.Parse
+	if c.Url != "" {
+		// We ignore the error because this already validated by JSON schema.
+		baseURL, _ := url.Parse(c.Url)
+		parseRepo = baseURL.Parse
+	}
+
+	for i, repo := range c.Repos {
+		cloneURL, err := parseRepo(repo)
+		if err != nil {
+			return fmt.Errorf(`repos.%d: %s`, i, err)
+		}
+		switch cloneURL.Scheme {
+		case "git", "http", "https", "ssh":
+			continue
+		default:
+			return fmt.Errorf("repos.%d: %scheme %q not one of git, http, https or ssh", i, cloneURL.Scheme)
+
+		}
+	}
+	return nil
+}
 
 func (e *ExternalServicesStore) validateGithubConnection(c *schema.GitHubConnection) error {
 	err := new(multierror.Error)
