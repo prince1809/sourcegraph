@@ -10,6 +10,29 @@ const OtherExternalServiceSchemaJSON = `{
   "description": "Configuration for a Connection to Git repositories for which an external service integration isn't yet available.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["repos"]
+  "required": ["repos"],
+  "properties": {
+    "url": {
+      "title": "Git clone base URL",
+      "type": "string",
+      "format": "uri",
+      "pattern": "^(git|ssh|https?)://",
+      "not": {
+        "type": "string",
+        "pattern": "example\\.com"
+      },
+      "examples": ["https://github.com/?access_token=secret", "ssh://user@host.xz:2333/", "git://host.xz:2333/"]
+    },
+    "repos": {
+      "title": "List of repository clone URLs to be discovered.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "format": "uri-reference",
+        "examples": ["path/to/my/repo", "path/to/my/repo.git/"]
+      }
+    }
+  }
 }
 `

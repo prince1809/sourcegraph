@@ -3,6 +3,7 @@ package db
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/go-multierror"
 	"github.com/keegancsmith/sqlf"
@@ -13,6 +14,7 @@ import (
 	"github.com/prince1809/sourcegraph/pkg/jsonc"
 	"github.com/prince1809/sourcegraph/schema"
 	"github.com/xeipuuv/gojsonschema"
+	"time"
 )
 
 // An ExternalServicesStore stores external services and their configuration.
@@ -21,7 +23,7 @@ import (
 // global instance in stores.go
 type ExternalServicesStore struct {
 	GithubValidators []func(*schema.GitHubConnection) error
-	GitLabValidators []func(*schema.GitLabConnection, []schema.AuthProviders)
+	GitLabValidators []func(*schema.GitLabConnection, []schema.AuthProviders) error
 }
 
 // ExternalServiceKinds contains a map of all supported kinds of
@@ -99,9 +101,44 @@ func (e *ExternalServicesStore) ValidateConfig(kind, config string, ps []schema.
 	// Extra validation not based on JSON schema.
 	switch kind {
 	case "GITHUB":
+		var c schema.GitHubConnection
+		if err = json.Unmarshal(normalized, &c); err != nil {
+			return err
+		}
+		err = e.validateGithubConnection(&c)
+	case "GITLAB":
+		var c schema.GitLabConnection
+		if err = json.Unmarshal(normalized, &c); err != nil {
+			return err
+		}
+		err = e.validateGitlabConnection(&c, ps)
 
+	case "OTHERS":
+		var c schema.OtherExternalServiceConnection
+		if err = json.Unmarshal(normalized, &c); err != nil {
+			return err
+		}
+		err = validateOtherExternalServiceConnection(&c)
 	}
 	return multierror.Append(errs, err).ErrorOrNil()
+}
+
+// Ne
+
+func (e *ExternalServicesStore) validateGithubConnection(c *schema.GitHubConnection) error {
+	err := new(multierror.Error)
+	for _, validate := range e.GithubValidators {
+		err = multierror.Append(err, validate(c))
+	}
+	return err.ErrorOrNil()
+}
+
+func (e *ExternalServicesStore) validateGitlabConnection(c *schema.GitLabConnection, ps []schema.AuthProviders) error {
+	err := new(multierror.Error)
+	for _, validate := range e.GitLabValidators {
+		err = multierror.Append(err, validate(c, ps))
+	}
+	return err.ErrorOrNil()
 }
 
 // Create creates a external service.
@@ -109,7 +146,17 @@ func (e *ExternalServicesStore) ValidateConfig(kind, config string, ps []schema.
 // 🚨 SECURITY: The caller must ensure that the actor is a site admin.
 func (c *ExternalServicesStore) Create(ctx context.Context, externalService *types.ExternalService) error {
 	ps := conf.Get().Critical.AuthProviders
-	if err := c.ValidateConfig(externalService.Kind)
+	if err := c.ValidateConfig(externalService.Kind, externalService.Config, ps); err != nil {
+		return err
+	}
+
+	externalService.CreatedAt = time.Now()
+	externalService.UpdatedAt = externalService.CreatedAt
+
+	return dbconn.Global.QueryRowContext(
+		ctx,
+		"INSERT INTO  external_services(kind, display_name, config, created_at, updated_at) VALUES($1, $2, $3, $4, $5) RETURNING id",
+		externalService.Kind, externalService.DisplayName, externalService.Config, externalService.CreatedAt, externalService.UpdatedAt).Scan(&externalService.ID)
 }
 
 // List returns all external services.

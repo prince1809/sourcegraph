@@ -10,7 +10,7 @@ import (
 	"github.com/prince1809/sourcegraph/pkg/conf"
 	"github.com/prince1809/sourcegraph/pkg/conf/conftypes"
 	"github.com/prince1809/sourcegraph/pkg/db/confdb"
-	"github.com/sourcegraph/sourcegraph/pkg/jsonc"
+	"github.com/prince1809/sourcegraph/pkg/jsonc"
 	"io/ioutil"
 	"log"
 	"net/url"
