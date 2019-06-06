@@ -3,6 +3,7 @@ package conf
 import (
 	"github.com/prince1809/sourcegraph/pkg/conf/conftypes"
 	"github.com/prince1809/sourcegraph/schema"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -69,7 +70,18 @@ func init() {
 	// Don't kickoff the background updaters for the client/server
 	// when running test cases.
 	if mode == modeTest {
+		close(configurationServerFrontendOnlyInitialized)
 
+		// Seed the client store with a dummy configuration for test cases.
+		_, err := clientStore.MaybeUpdate(conftypes.RawUnified{
+			Critical:           "{}",
+			Site:               "{}",
+			ServiceConnections: conftypes.ServiceConnections{},
+		})
+		if err != nil {
+			log.Fatalf("received error when setting up the store for the default client during test, err :%s", err)
+		}
+		return
 	}
 
 	// The default client is started in InitConfigurationServerFrontendOnly in

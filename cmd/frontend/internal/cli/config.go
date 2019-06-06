@@ -93,7 +93,6 @@ type configurationSource struct{}
 
 func (c configurationSource) Read(ctx context.Context) (conftypes.RawUnified, error) {
 	critical, err := confdb.CriticalGetLatest(ctx)
-	fmt.Println("CriticalGetLatest:","CriticalGetLatest:",  critical)
 	if err != nil {
 		return conftypes.RawUnified{}, errors.Wrap(err, "confdb.CriticalGetLatest")
 	}
@@ -101,6 +100,8 @@ func (c configurationSource) Read(ctx context.Context) (conftypes.RawUnified, er
 	if err != nil {
 		return conftypes.RawUnified{}, errors.Wrap(err, "confdb.SiteGetLatest")
 	}
+
+	fmt.Println("XXXXX", site)
 
 	return conftypes.RawUnified{
 		Critical: critical.Contents,

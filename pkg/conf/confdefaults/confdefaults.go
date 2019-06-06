@@ -1,16 +1,24 @@
+// Package confdefaults contains default configuration files for various
+// deployment types.
+//
+// It is a separate package so that users of pkg/conf do not indirectly import
+// pkg/db/confdb, which we have a linter to protect against.
 package confdefaults
 
-import "github.com/prince1809/sourcegraph/pkg/conf/conftypes"
+import (
+	"github.com/prince1809/sourcegraph/pkg/conf/conftypes"
+)
 
-// TODO(slimsag): consider moving these into actual json files for improved editing
+// TODO(slimsag): consider moving these into actual json files for improved
+// editing.
 
-// DevAndTesting is the default configuration applied to dev instance of
+// DevAndTesting is the default configuration applied to dev instances of
 // Sourcegraph, as well as what is used by default during Go testing.
 //
-// Tests that wish to use a spcific configuration should use conf.Mock.
+// Tests that wish to use a specific configuration should use conf.Mock.
 //
-// Note: This actually generally applies to 'go test' because we always
-// override this configuration via  DEV_OVERRIDE_*_CONFIG environment
+// Note: This actually generally only applies to 'go test' because we always
+// override this configuration via DEV_OVERRIDE_*_CONFIG environment
 // variables.
 var DevAndTesting = conftypes.RawUnified{
 	Critical: `{
@@ -26,6 +34,8 @@ var DevAndTesting = conftypes.RawUnified{
 }`,
 }
 
+// DockerContainer is the default configuration applied to Docker
+// single-container instances of Sourcegraph.
 var DockerContainer = conftypes.RawUnified{
 	Critical: `{
 	"auth.providers": [
@@ -73,5 +83,6 @@ var Cluster = conftypes.RawUnified{
 // In the case of a migration from an old Sourcegraph version to 3.0, this is
 // not strictly one of the declared defaults in this package but rather may be
 // defaults from a user's old configuration.
-
+//
+// TODO(slimsag): Remove legacy warning above after 3.0.
 var Default conftypes.RawUnified

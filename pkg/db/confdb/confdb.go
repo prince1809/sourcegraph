@@ -65,7 +65,7 @@ func CriticalGetLatest(ctx context.Context) (latest *CriticalConfig, err error) 
 	}
 	defer done()
 
-	_, err = addDefault(ctx, tx, typeSite, confdefaults.Default.Critical)
+	_, err = addDefault(ctx, tx, typeCritical, confdefaults.Default.Critical)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +149,6 @@ func getLatest(ctx context.Context, tx queryable, configType configType) (*Confi
 		return nil, err
 	}
 	if len(versions) != 1 {
-		fmt.Println("**********:", len(versions))
 		// No config has been written yet.
 		return nil, nil
 	}
@@ -165,7 +164,6 @@ func parseQueryRows(ctx context.Context, rows *sql.Rows) ([]*Config, error) {
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println("XXXXXXXXXX:", f.ID, f.Type, f.Contents, f.CreatedAt, f.CreatedAt)
 		versions = append(versions, &f)
 	}
 	if err := rows.Err(); err != nil {

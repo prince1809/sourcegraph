@@ -233,7 +233,7 @@ func DoMigrate(m *migrate.Migrate) (err error) {
 	fmt.Println("Starting migration")
 	err = m.Up()
 	if err == nil || err == migrate.ErrNoChange {
-		fmt.Println("Failed to migrate up")
+		fmt.Println("No change, nothing to migrate")
 		return nil
 
 	}
