@@ -114,9 +114,26 @@ func (c configurationSource) Read(ctx context.Context) (conftypes.RawUnified, er
 	}, nil
 }
 
-func (c configurationSource) Write(ctx context.Context, data conftypes.RawUnified) error {
-	//critical, err := confdb.
-	panic("implement me")
+func (c configurationSource) Write(ctx context.Context, input conftypes.RawUnified) error {
+	// TODO(slimsag): future: pass lastID through for race prevention
+	critical, err := confdb.CriticalGetLatest(ctx)
+	if err != nil {
+		return errors.Wrap(err, "confdb.CriticalGetLatest")
+	}
+	site, err := confdb.SiteGetLatest(ctx)
+	if err != nil {
+		return errors.Wrap(err, "confdb.SiteGetLatest")
+	}
+
+	_, err = confdb.CriticalCreateIfUpToDate(ctx, &critical.ID, input.Critical)
+	if err != nil {
+		return errors.Wrap(err, "confdb.CriticalCreateIfUpToDate")
+	}
+	_, err = confdb.SiteCreateIfUpToDate(ctx, &site.ID, input.Site)
+	if err != nil {
+		return errors.Wrap(err, "confdb.SiteCreateIfUpToUpdate")
+	}
+	return nil
 }
 
 func postgresDSN() string {

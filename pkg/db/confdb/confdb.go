@@ -33,6 +33,58 @@ type CriticalConfig Config
 // edit has been rejected.
 var ErrNewerEdit = errors.New("someone else has already applied a newer edit")
 
+// SiteCreateIfUpToDate saves the given site config "contents" to the database if the
+// supplied "lastID" is equal to the one that was most recently saved to the database.
+//
+// The site config that was most recently saved to the database is returned.
+// An error is returned if "contents" is invalid JSON.
+// 🚨 SECURITY: This method does NOT verify the user is an admin. The caller is
+//
+// responsible for ensuring this or that the response never makes it to a user.
+func SiteCreateIfUpToDate(ctx context.Context, lastID *int32, contents string) (latest *SiteConfig, err error) {
+	tx, done, err := newTransaction(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer done()
+
+	newLastID, err := addDefault(ctx, tx, typeSite, confdefaults.Default.Site)
+	if err != nil {
+		return nil, err
+	}
+	if newLastID != nil {
+		lastID = newLastID
+	}
+
+	criticalSite, err := createIfUpToDate(ctx, tx, typeSite, lastID, contents)
+	return (*SiteConfig)(criticalSite), err
+}
+
+// CriticalCreateIfUpToDate saves the given critical config "contents" to the
+// database if the supplied "lastID" is equal to the one that was most
+// recently saved to the database. (i.e SiteGetLatest's ID field).
+//
+// 🚨 SECURITY: This method does NOT verify the user is an admin. The caller is
+// responsible for ensuring this or that the response never makes it to a user.
+func CriticalCreateIfUpToDate(ctx context.Context, lastID *int32, contents string) (latest *CriticalConfig, err error) {
+	tx, done, err := newTransaction(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer done()
+
+	newLastID, err := addDefault(ctx, tx, typeCritical, confdefaults.Default.Critical)
+	if err != nil {
+		return nil, err
+	}
+	if newLastID != nil {
+		lastID = newLastID
+	}
+
+	criticalSite, err := createIfUpToDate(ctx, tx, typeCritical, lastID, contents)
+	return (*CriticalConfig)(criticalSite), err
+}
+
 // SiteGetLatest returns the site config that was most recently saved to the database.
 // This returns nil, nil if there is not yet a site config in the database.
 //
