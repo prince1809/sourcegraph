@@ -101,8 +101,6 @@ func (c configurationSource) Read(ctx context.Context) (conftypes.RawUnified, er
 		return conftypes.RawUnified{}, errors.Wrap(err, "confdb.SiteGetLatest")
 	}
 
-	fmt.Println("XXXXX", site)
-
 	return conftypes.RawUnified{
 		Critical: critical.Contents,
 		Site:     site.Contents,

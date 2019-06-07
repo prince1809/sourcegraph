@@ -11,6 +11,7 @@ require (
 	github.com/golang-migrate/migrate v3.5.4+incompatible
 	github.com/golangci/golangci-lint v1.16.0
 	github.com/google/zoekt v0.0.0-00010101000000-000000000000
+	github.com/gorilla/handlers v1.4.0
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/joho/godotenv v1.3.0
 	github.com/keegancsmith/sqlf v1.1.0
