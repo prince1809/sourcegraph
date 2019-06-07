@@ -1,9 +1,10 @@
 import {generateNamespace} from '@gql2ts/from-schema'
-import {DEFAULT_TYPE_MAP} from '@gql2ts/language-typescript'
+import DEFAULT_OPTIONS, {DEFAULT_TYPE_MAP} from '@gql2ts/language-typescript'
 import {buildSchema, graphql, IntrospectionQuery, introspectionQuery} from 'graphql';
 import gulp from 'gulp'
 import {readFile, writeFile} from 'mz/fs'
 import path from 'path';
+import {format, resolveConfig} from "prettier";
 
 const GRAPHQL_SCHEMA_PATH = path.join(__dirname, '../cmd/frontend/graphqlbackend/schema.graphql')
 
@@ -19,7 +20,7 @@ export async function graphQLTypes(): Promise<void> {
     const schema = buildSchema(schemaStr)
     const result = (await graphql(schema, introspectionQuery)) as { data: IntrospectionQuery }
 
-    // const formatOptions = (await resolveConfig(__dirname, {config: __dirname + '/../prettier.config.js'}))
+    const formatOptions = (await resolveConfig(__dirname, {config: __dirname + '/../prettier.config.js'}))
     const typings =
         'export type ID = string\n\n' +
         generateNamespace(
@@ -31,7 +32,16 @@ export async function graphQLTypes(): Promise<void> {
                     ID: 'ID',
                 },
             },
-            {}
+            {
+                generateNamespace: (name: string, interfaces: string) => interfaces,
+                interfaceBuilder: (name: string, body: string) =>
+                    'export ' + DEFAULT_OPTIONS.interfaceBuilder(name, body),
+                enumTypeBuilder: (name: string, values: string) =>
+                    'export ' + DEFAULT_OPTIONS.enumTypeBuilder(name, values),
+                typeBuilder: (name: string, body: string) => 'export ' + DEFAULT_OPTIONS.typeBuilder(name, body),
+                wrapList: (type: string) => `${type}[]`,
+                postProcessor: (code: string) => format(code, {...formatOptions, parser: 'typescript'}),
+            }
         )
     await writeFile(__dirname + '/src/graphql/schema.ts', typings)
 }

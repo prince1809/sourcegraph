@@ -1,0 +1,14 @@
+{
+  "private": true,
+  "version": "1.0.0",
+  "engines": {
+    "yarn": ">1.10.0"
+  },
+  "scripts": {
+    "dev": "NODE_ENV"
+  },
+  "browserslist": [
+    "last 3 Chrome versions",
+    "last 3 Firefox versions"
+  ]
+}
