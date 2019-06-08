@@ -47,6 +47,11 @@ func NewServer(source ConfigurationSource) *Server {
 	}
 }
 
+// Raw returns the raw text of the configuration file.
+func (s *Server) Raw() conftypes.RawUnified {
+	return s.store.Raw()
+}
+
 // Write writes the JSON config file to the config file's path. If the JSON configuration is
 // invalid, an error is returned.
 func (s *Server) Write(ctx context.Context, input conftypes.RawUnified) error {

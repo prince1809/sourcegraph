@@ -3,10 +3,12 @@ package cli
 import (
 	"context"
 	"fmt"
+	"github.com/keegancsmith/tmpfriend"
 	"github.com/prince1809/sourcegraph/cmd/frontend/globals"
 	"github.com/prince1809/sourcegraph/cmd/frontend/internal/cli/loghandlers"
 	"github.com/prince1809/sourcegraph/pkg/conf"
 	"github.com/prince1809/sourcegraph/pkg/db/dbconn"
+	"github.com/prince1809/sourcegraph/pkg/debugserver"
 	"github.com/prince1809/sourcegraph/pkg/env"
 	"github.com/prince1809/sourcegraph/pkg/sysreq"
 	"github.com/prince1809/sourcegraph/pkg/tracer"
@@ -100,6 +102,23 @@ func Main() error {
 			return nil
 		}
 	}
+
+	fmt.Println("###### Validate config ######")
+	printConfigValidation()
+
+	cleanup := tmpfriend.SetupOrNOOP()
+	defer cleanup()
+
+	// Don't proceed if system requirements are missing, to avoid
+	// presenting uses with a half-working experience.
+	if err := checkSysReqs(context.Background(), os.Stderr); err != nil {
+		return err
+	}
+
+	go debugserver.Start()
+
+	//siteid.init()
+
 
 	if printLogo {
 		fmt.Println(" ")

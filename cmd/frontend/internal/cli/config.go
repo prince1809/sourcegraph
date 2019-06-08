@@ -6,17 +6,37 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/prince1809/sourcegraph/cmd/frontend/db"
+	"github.com/prince1809/sourcegraph/cmd/frontend/globals"
 	"github.com/prince1809/sourcegraph/cmd/frontend/types"
 	"github.com/prince1809/sourcegraph/pkg/conf"
 	"github.com/prince1809/sourcegraph/pkg/conf/conftypes"
 	"github.com/prince1809/sourcegraph/pkg/db/confdb"
 	"github.com/prince1809/sourcegraph/pkg/jsonc"
+	"gopkg.in/inconshreveable/log15.v2"
 	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
 	"os/user"
 )
+
+
+func printConfigValidation() {
+	messages, err := conf.Validate(globals.ConfigurationServerFrontendOnly.Raw())
+	if err != nil {
+		log.Printf("Warning: Unable to validate Sourcegraph site configuration: %s", err)
+		return
+	}
+
+	if len(messages) > 0 {
+		log15.Warn("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+		log15.Warn("⚠️ Warnings related to the Sourcegraph site configuration:")
+		for _, verr := range messages {
+			log15.Warn(verr)
+		}
+		log15.Warn("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+	}
+}
 
 // handleConfigOverrides handles allowing dev environments to forcibly override
 // the configuration in the database upon startup. This is used to e.g. ensure

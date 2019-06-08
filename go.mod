@@ -21,6 +21,7 @@ require (
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/joho/godotenv v1.3.0
 	github.com/keegancsmith/sqlf v1.1.0
+	github.com/keegancsmith/tmpfriend v0.0.0-20180423180255-86e88902a513
 	github.com/kevinburke/differ v0.0.0-20180721181420-bdfd927653c8
 	github.com/kevinburke/go-bindata v3.13.0+incompatible
 	github.com/kr/text v0.1.0
