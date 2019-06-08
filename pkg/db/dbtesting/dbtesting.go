@@ -1,13 +1,10 @@
+// Package dbtesting provides database test helpers.
 package dbtesting
 
 import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/prince1809/sourcegraph/pkg/actor"
-	"github.com/prince1809/sourcegraph/pkg/db/dbconn"
-
 	"hash/fnv"
 	"io"
 	"log"
@@ -17,9 +14,13 @@ import (
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/pkg/errors"
+	"github.com/prince1809/sourcegraph/pkg/actor"
+	"github.com/prince1809/sourcegraph/pkg/db/dbconn"
 )
 
-// MockHashPassword if non-nil is used intead of db.hashPassword. This is useful
+// MockHashPassword if non-nil is used instead of db.hashPassword. This is useful
 // when running tests since we can use a faster implementation.
 var MockHashPassword func(password string) (sql.NullString, error)
 var MockValidPassword func(hash, password string) bool
@@ -31,7 +32,6 @@ func useFastPasswordMocks() {
 		io.WriteString(h, password)
 		return sql.NullString{Valid: true, String: strconv.FormatUint(h.Sum64(), 16)}, nil
 	}
-
 	MockValidPassword = func(hash, password string) bool {
 		h := fnv.New64()
 		io.WriteString(h, password)
@@ -39,7 +39,7 @@ func useFastPasswordMocks() {
 	}
 }
 
-// BeforeTest function are called before each test is run (by TestContext)
+// BeforeTest functions are called before each test is run (by TestContext).
 var BeforeTest []func()
 
 // DBNameSuffix must be set by DB test packages at init time to a value that is unique among all
@@ -55,8 +55,8 @@ var (
 // TestContext constructs a new context that holds a temporary test DB
 // handle and other test configuration.
 //
-// Callers (other than github.com/prince1809/sourcegraph/cmd/frontend/db) must set a name in this
-// package's DBNameSuffix var that is unique among all other test packages that call TextContext, so
+// Callers (other than github.com/sourcegraph/sourcegraph/cmd/frontend/db) must set a name in this
+// package's DBNameSuffix var that is unique among all other test packages that call TestContext, so
 // that each package's tests run in separate DBs and do not conflict.
 func TestContext(t testing.TB) context.Context {
 	useFastPasswordMocks()
@@ -68,7 +68,6 @@ func TestContext(t testing.TB) context.Context {
 	connectOnce.Do(func() {
 		connectErr = initTest(DBNameSuffix)
 	})
-
 	if connectErr != nil {
 		// only ignore connection errors if not on CI
 		if os.Getenv("CI") == "" {
@@ -94,7 +93,7 @@ func TestContext(t testing.TB) context.Context {
 func emptyDBPreserveSchema(d *sql.DB) error {
 	_, err := d.Exec(`SELECT * FROM schema_migrations`)
 	if err != nil {
-		return fmt.Errorf("Table schema migrations not found: %v", err)
+		return fmt.Errorf("Table schema_migrations not found: %v", err)
 	}
 	return truncateDB(d)
 }
@@ -130,7 +129,7 @@ func initTest(nameSuffix string) error {
 
 	if os.Getenv("TEST_SKIP_DROP_DB_BEFORE_TESTS") == "" {
 		// When running the db-backcompat.sh tests, we need to *keep* the DB around because it has
-		// the new schema produced by the new version. If we dropped the DB here, the we'd recreate
+		// the new schema produced by the new version. If we dropped the DB here, then we'd recreate
 		// it at the OLD schema, which is not desirable because we need to run tests against the NEW
 		// schema. Thus db-backcompat.sh sets TEST_SKIP_DROP_DB_BEFORE_TESTS=true.
 		out, err := exec.Command("dropdb", "--if-exists", dbname).CombinedOutput()

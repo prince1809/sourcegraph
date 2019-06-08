@@ -6,6 +6,7 @@ import (
 	"github.com/keegancsmith/tmpfriend"
 	"github.com/prince1809/sourcegraph/cmd/frontend/globals"
 	"github.com/prince1809/sourcegraph/cmd/frontend/internal/cli/loghandlers"
+	"github.com/prince1809/sourcegraph/cmd/frontend/internal/pkg/siteid"
 	"github.com/prince1809/sourcegraph/pkg/conf"
 	"github.com/prince1809/sourcegraph/pkg/db/dbconn"
 	"github.com/prince1809/sourcegraph/pkg/debugserver"
@@ -18,6 +19,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -48,6 +50,35 @@ func init() {
 	cacheDir := env.Get("CACHE_DIR", "/tmp", "directory to store cached archives.")
 	vfsutil.ArchiveCacheDir = filepath.Join(cacheDir, "frontend-archive-cache")
 
+}
+
+// configureExternalURL determines the external URL of the application.
+//
+// It returns an errir in the evern that the configured external URL is not
+// parsable.
+func configureExternalURL() (*url.URL, error) {
+	addr := nginxAddr
+	if addr == "" {
+		addr = httpAddr
+	}
+	var hostPort string
+	if strings.HasPrefix(addr, ":") {
+		// Prepend localhost if HTTP listen addr is just a port.
+		hostPort = "127.0.0.1" + addr
+	} else {
+		hostPort = addr
+	}
+	externalURL := conf.Get().Critical.ExternalURL
+	if externalURL == "" {
+		externalURL = "http://<http-addr>"
+	}
+	externalURL = strings.Replace(externalURL, "<http-addr>", hostPort, -1)
+
+	u, err := url.Parse(externalURL)
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
 }
 
 // Main is the main entrypoint for the frontend server program.
@@ -117,8 +148,21 @@ func Main() error {
 
 	go debugserver.Start()
 
-	//siteid.init()
+	siteid.Init()
 
+	var err error
+	globals.ExternalURL, err = configureExternalURL()
+	if err != nil {
+		// The user configured an unparsable external URL.
+		//
+		// Per critical configuration usage guidelines, bad config should NEVER
+		// take down a process, the process should just 'do nothing'. So we do
+		// that here.
+		log15.Crit("Bad externalURL preventing server from starting (Please fix it in the management console and restart the server)", "error", err)
+		select {}
+	}
+
+	//goroutine.Go(func() { bg.})
 
 	if printLogo {
 		fmt.Println(" ")

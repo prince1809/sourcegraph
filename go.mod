@@ -15,6 +15,7 @@ require (
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
 	github.com/golang-migrate/migrate v3.5.4+incompatible
 	github.com/golangci/golangci-lint v1.16.0
+	github.com/google/uuid v1.1.1
 	github.com/google/zoekt v0.0.0-00010101000000-000000000000
 	github.com/gorilla/handlers v1.4.0
 	github.com/gorilla/mux v1.7.2
