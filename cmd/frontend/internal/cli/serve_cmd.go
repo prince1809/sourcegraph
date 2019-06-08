@@ -164,6 +164,10 @@ func Main() error {
 
 	//goroutine.Go(func() { bg.})
 
+
+	// The internal HTTP handler does not include the auth handlers.
+	internalHandler := newInternalHTTPHandler()
+
 	if printLogo {
 		fmt.Println(" ")
 		fmt.Println(logoColor)
