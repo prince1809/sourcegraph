@@ -55,6 +55,12 @@ type Options struct {
 
 type Option func(*Options)
 
+func Filter(f func(*log15.Record) bool) Option {
+	return func(o *Options) {
+		o.filters = append(o.filters, f)
+	}
+}
+
 func init() {
 	// Enable colors by default but support https://no-color.org
 	color.NoColor = env.Get("NO_COLOR", "", "Disable colored output") != ""

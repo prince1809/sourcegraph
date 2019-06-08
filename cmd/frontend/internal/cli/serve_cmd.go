@@ -4,16 +4,22 @@ import (
 	"context"
 	"fmt"
 	"github.com/prince1809/sourcegraph/cmd/frontend/globals"
+	"github.com/prince1809/sourcegraph/cmd/frontend/internal/cli/loghandlers"
 	"github.com/prince1809/sourcegraph/pkg/conf"
 	"github.com/prince1809/sourcegraph/pkg/db/dbconn"
 	"github.com/prince1809/sourcegraph/pkg/env"
+	"github.com/prince1809/sourcegraph/pkg/sysreq"
+	"github.com/prince1809/sourcegraph/pkg/tracer"
+	"github.com/prince1809/sourcegraph/pkg/version"
 	"github.com/prince1809/sourcegraph/pkg/vfsutil"
 	"gopkg.in/inconshreveable/log15.v2"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -56,6 +62,44 @@ func Main() error {
 	conf.MustValidateDefaults()
 	handleConfigOverrides()
 
+	// Filter trace logs
+	d, _ := time.ParseDuration(traceThreshold)
+	tracer.Init(tracer.Filter(loghandlers.Trace(strings.Fields(trace), d)))
+
+	if len(os.Args) >= 2 {
+		switch os.Args[1] {
+		case "help", "-h", "--help":
+			log.Printf("Version: %s", version.Version())
+			log.Print()
+
+			env.PrintHelp()
+
+			log.Print()
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			for _, st := range sysreq.Check(ctx, skippedSysReqs()) {
+				log.Printf("%s:", st.Name)
+				if st.OK() {
+					log.Print("\tOK")
+					continue
+				}
+				if st.Skipped {
+					log.Print("\tSkipped")
+					continue
+				}
+				if st.Problem != "" {
+					log.Print("\t" + st.Problem)
+				}
+				if st.Err != nil {
+					log.Printf("\tError: %s", st.Err)
+				}
+				if st.Fix != "" {
+					log.Printf("\tPossible fix: %s", st.Fix)
+				}
+			}
+			return nil
+		}
+	}
 
 	if printLogo {
 		fmt.Println(" ")
