@@ -10,6 +10,7 @@ const (
 	Telemetry   = "telemetry"
 
 	SavedQueriesListAll = "internal.saved-queries.list-all"
+	Configuration       = "internal.configuration"
 )
 
 // New creates a new API router with router URL pattern definitions but
@@ -24,7 +25,7 @@ func New(base *mux.Router) *mux.Router {
 	addRegistryRoute(base)
 	addGraphQLRoute(base)
 	addTelemetryRoute(base)
-	
+
 	return base
 }
 
@@ -37,6 +38,7 @@ func NewInternal(base *mux.Router) *mux.Router {
 	base.StrictSlash(true)
 	// Internal API endpoints should only be served on the internal Handler
 	base.Path("/saved-queries/list-all").Methods("POST").Name(SavedQueriesListAll)
+	base.Path("/configuration").Methods("POST").Name(Configuration)
 
 	addRegistryRoute(base)
 	addGraphQLRoute(base)
