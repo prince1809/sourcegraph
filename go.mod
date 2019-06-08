@@ -3,7 +3,12 @@ module github.com/prince1809/sourcegraph
 go 1.12
 
 require (
+	github.com/Microsoft/go-winio v0.4.12 // indirect
 	github.com/alecthomas/chroma v0.6.3 // indirect
+	github.com/docker/distribution v2.7.1+incompatible // indirect
+	github.com/docker/docker v1.13.1 // indirect
+	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/docker/go-units v0.4.0 // indirect
 	github.com/fatih/color v1.7.0
 	github.com/gchaincl/sqlhooks v1.1.0
 	github.com/go-delve/delve v1.2.0
@@ -25,6 +30,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.10.0 // indirect
 	github.com/mattn/goreman v0.0.0-00010101000000-000000000000
 	github.com/mcuadros/go-version v0.0.0-20190308113854-92cdf37c5b75
+	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opentracing-contrib/go-stdlib v0.0.0-20190324214902-3020fec0e66b
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/pkg/errors v0.8.1

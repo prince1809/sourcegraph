@@ -1,7 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"github.com/prince1809/sourcegraph/cmd/server/shared"
+)
 
 func main() {
-	fmt.Println("##############hello")
+	shared.Main()
 }

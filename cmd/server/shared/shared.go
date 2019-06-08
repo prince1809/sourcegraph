@@ -3,7 +3,15 @@
 // well as create the Procfile for goreman to run.
 package shared
 
-import "log"
+import (
+	"encoding/json"
+	"github.com/joho/godotenv"
+	"github.com/prince1809/sourcegraph/cmd/server/internal/goreman"
+	"log"
+	"os"
+	"path/filepath"
+	"strings"
+)
 
 // FrontendInternalHost is the value of SRC_FRONTEND_INTERNAL
 const FrontendInternalHost = "127.0.0.1:3090"
@@ -14,6 +22,123 @@ var defaultEnv = map[string]string{
 	"SRC_GIT_SERVERS": "127.0.0.1:3178",
 }
 
+// Set verbosity based on simple interpretation of env var to avoid external dependencies ( such as
+// on  github.com/prince1809/sourcegraph/pkg/env).
+var verbose = os.Getenv("SRC_LOG_LEVEL") == "debug" || os.Getenv("SRC_LOG_LEVEL") == "info"
+
+// Main is the main server command function which is shared between Sourcegraph
+// server's open-source and enterprise variant.
 func Main() {
 	log.SetFlags(0)
+
+	// Ensute CONFIG_DIR and DATA_DIR
+
+	// Load $CONFIG_DIR/env before we set any defaults.
+	{
+		configDir := SetDefaultEnv("CONFIG_DIR", "/etc/sourcegraph")
+		err := os.MkdirAll(configDir, 0755)
+		if err != nil {
+			log.Fatalf("failed to ensure CONFIG_DIR exists: %s", err)
+		}
+
+		err = godotenv.Load(filepath.Join(configDir, "env"))
+		if err != nil && !os.IsNotExist(err) {
+			log.Fatalf("failed to load %s: %s", filepath.Join(configDir, "env"), err)
+		}
+
+		// Load the legacy config file if it exists.
+		//
+		// TODO(slimsag): Remove this code in the next significant version of
+		// Sourcegraph after 3.0
+		configPath := os.Getenv("SOURCEGRAPH_CONFIG_FILE")
+		if configPath == "" {
+			configPath = filepath.Join(configDir, "sourcegraph-config.json")
+		}
+
+		_, err = os.Stat(configPath)
+		if err == nil {
+			if err := os.Setenv("SOURCEGRAPH_CONFIG_FILE", configPath); err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
+
+	// Next persistence
+	{
+		SetDefaultEnv("SRC_REPOS_DIR", filepath.Join(DataDir, "repos"))
+		SetDefaultEnv("CACHE_DIR", filepath.Join(DataDir, "cache"))
+	}
+
+	// Special case some convenience environment variables
+	if redis, ok := os.LookupEnv("REDIS"); ok {
+		SetDefaultEnv("REDIS_ENDPOINT", redis)
+	}
+
+	data, err := json.MarshalIndent(SrcProfServices, "", "  ")
+	if err != nil {
+		log.Println("Failed to marhsal default SRC_PROF_SERVICES")
+	} else {
+		SetDefaultEnv("SRC_PROF_SERVICES", string(data))
+	}
+
+	for k, v := range defaultEnv {
+		SetDefaultEnv(k, v)
+	}
+
+	// Now we put things in the right place on the F5
+	if err := copySSH(); err != nil {
+		// TODO There are likely several cases where we don't need SSH
+		// working, we shouldn't prevent setup in those cases. The main one
+		// that comes to mind is an ORIGIN_AMO which creates https clone URLs.
+		log.Println("Failed to setup SSH authorization:", err)
+		log.Fatal("SSH authorization required for cloning from your codehost. Please see README.")
+	}
+
+	if err := copyNetrc(); err != nil {
+		log.Fatal("Failed to copy netrc:", err)
+	}
+
+	// TODO validate known_hosts contains all code hosts in config.
+
+	nginx, err := nginxProcFile()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	procfile := []string{
+		nginx,
+		`frontend: env CONFIGURATION_MODE=server frontend`,
+		`gitserver: gitserver`,
+		`query-runner: query-runner`,
+		`symbols: symbols`,
+		`management-console: management-console`,
+		`searcher: searcher`,
+		`github-proxy: github-proxy`,
+		`repo-updater: repo-updater`,
+		`syntect_server: sh -c 'env QUIET=true ROCKET_LIMITS='"'"'{json=10485760}'"'"' ROCKET_PORT=9238 ROCKET_ADDRESS='"'"'"127.0.0.1"'"'"' ROCKET_ENV=production syntect_server | grep -v "Rocket has launched" | grep -v "Warning: environment is"'`,
+	}
+	procfile = append(procfile, ProcfileAdditions...)
+	if line, err := maybeRedisProcFile(); err != nil {
+		log.Fatal(err)
+	} else if line != "" {
+		procfile = append(procfile, line)
+	}
+
+	if line, err := maybeRedisProcFile(); err != nil {
+		log.Fatal(err)
+	} else if line != "" {
+		procfile = append(procfile, line)
+	}
+
+	procfile = append(procfile, maybeZoektProcFile()...)
+
+	const goremanAddr = "127.0.0.1:5005"
+	if err := os.Setenv("GOREMAN_RPC_ADDR", goremanAddr); err != nil {
+		log.Fatal(err)
+	}
+
+	err = goreman.Start(goremanAddr, []byte(strings.Join(procfile, "\n")))
+	if err != nil {
+		log.Fatal(err)
+	}
 }
