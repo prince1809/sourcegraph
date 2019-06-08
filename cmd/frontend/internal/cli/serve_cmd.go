@@ -164,26 +164,18 @@ func Main() error {
 
 	//goroutine.Go(func() { bg.})
 
-
-	// The internal HTTP handler does not include the auth handlers.
-	internalHandler := newInternalHTTPHandler()
-
-	if printLogo {
-		fmt.Println(" ")
-		fmt.Println(logoColor)
-		fmt.Println(" ")
-	}
-
-	// Create the external HTTP handler
 	externalHandler, err := newExternalHTTPHandler(context.Background())
 	if err != nil {
 		return err
 	}
 
-	// serve will serve externalHanlder on l, It additionally handles graceful restarts.
+	// The internal HTTP handler does not include the auth handlers.
+	internalHandler := newInternalHTTPHandler()
+
+	// serve will serve externalHandle on l. It additionally handles graceful restarts.
 	srv := &httpServers{}
 
-	// Start the http server.
+	// Start HTTP server.
 	l, err := net.Listen("tcp", httpAddr)
 	if err != nil {
 		return err
@@ -195,10 +187,32 @@ func Main() error {
 		WriteTimeout: 60 * time.Second,
 	})
 
+	if httpAddrInternal != "" {
+		l, err := net.Listen("tcp", httpAddrInternal)
+		if err != nil {
+			return err
+		}
+
+		log15.Debug("HTTP (internal) running", "on", httpAddrInternal)
+		srv.GoServe(l, &http.Server{
+			Handler:     internalHandler,
+			ReadTimeout: 75 * time.Second,
+			// Higher since for internal RPCs which can have large responses
+			// (eg.git archive). Should match the timeout used for git archive
+			// it gitserver.
+			WriteTimeout: time.Hour,
+		})
+	}
+
+	if printLogo {
+		fmt.Println(" ")
+		fmt.Println(logoColor)
+		fmt.Println(" ")
+	}
+
 	fmt.Printf("* Sourcegraph is ready at: %s \n", globals.ExternalURL)
 
 	srv.Wait()
-
 	return nil
 }
 

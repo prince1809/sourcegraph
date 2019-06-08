@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	github.com/Microsoft/go-winio v0.4.12 // indirect
-	github.com/NYTimes/gziphandler v1.1.1 // indirect
+	github.com/NYTimes/gziphandler v1.1.1
 	github.com/alecthomas/chroma v0.6.3 // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v1.13.1 // indirect
@@ -18,6 +18,7 @@ require (
 	github.com/golangci/golangci-lint v1.16.0
 	github.com/google/uuid v1.1.1
 	github.com/google/zoekt v0.0.0-00010101000000-000000000000
+	github.com/gorilla/context v1.1.1
 	github.com/gorilla/handlers v1.4.0
 	github.com/gorilla/mux v1.7.2
 	github.com/hashicorp/go-multierror v1.0.0

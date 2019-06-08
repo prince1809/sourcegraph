@@ -3,6 +3,10 @@ package cli
 import (
 	"context"
 	"github.com/NYTimes/gziphandler"
+	gcontext "github.com/gorilla/context"
+	"github.com/gorilla/mux"
+	"github.com/prince1809/sourcegraph/cmd/frontend/internal/httpapi"
+	"github.com/prince1809/sourcegraph/cmd/frontend/internal/httpapi/router"
 	"github.com/prince1809/sourcegraph/pkg/actor"
 	"net/http"
 )
@@ -22,7 +26,12 @@ func newInternalHTTPHandler() http.Handler {
 	internalMux := http.NewServeMux()
 	internalMux.Handle("/.internal/", gziphandler.GzipHandler(
 		withInternalActor(
-			httpapi.NewInternal)))
+			httpapi.NewInternalHandler(
+				router.NewInternal(mux.NewRouter().PathPrefix("/.internal/").Subrouter()),
+			),
+		),
+	))
+	return gcontext.ClearHandler(internalMux)
 }
 
 // withInternalActor wraps an existing HTTP handler by setting an internal actor in the HTTP request
