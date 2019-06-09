@@ -46,6 +46,7 @@ func newRouter() *mux.Router {
 	r.Path("/").Methods("GET").Name(routeHome)
 	r.Path("/start").Methods("GET").Name(routeStart)
 	r.PathPrefix("/welcome").Methods("GET").Name(routeWelcome)
+	r.Path("/search").Methods("GET").Name(routeSearch)
 
 	return r
 }
@@ -61,6 +62,16 @@ func initRouter() {
 	router.Get(routeHome).Handler(handler(serveHome))
 	router.Get(routeStart).Handler(staticRedirectHandler("/welcome", http.StatusMovedPermanently))
 	router.Get(routeWelcome).Handler(handler(serveWelcome))
+
+	// search
+	router.Get(routeSearch).Handler(handler(serveBasicPage(func(c *Common, r *http.Request) string {
+		shortQuery := limitString(r.URL.Query().Get("q"), 25, true)
+		if shortQuery == "" {
+			return "Sourcegraph"
+		}
+
+		return fmt.Sprintf("%s - Sourcegraph", shortQuery)
+	})))
 }
 
 // staticRedirectHandler returns an HTTP handler that redirects all requests to
@@ -88,6 +99,16 @@ func staticRedirectHandler(u string, code int) http.Handler {
 		}
 		http.Redirect(w, r, r.URL.String(), code)
 	})
+}
+
+func limitString(s string, n int, ellipsis bool) string {
+	if len(s) < n {
+		return s
+	}
+	if ellipsis {
+		return s[:n-1] + "…"
+	}
+	return s[:n-1]
 }
 
 // handler wraps an HTTP handler that returns potential errors. If any error is

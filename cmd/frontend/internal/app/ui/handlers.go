@@ -62,6 +62,22 @@ func newCommon(w http.ResponseWriter, r *http.Request, title string, serveError 
 	return common, nil
 }
 
+type handlerFunc func(w http.ResponseWriter, r *http.Request) error
+
+func serveBasicPage(title func(c *Common, r *http.Request) string) handlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		common, err := newCommon(w, r, "", serveError)
+		if err != nil {
+			return err
+		}
+		if common == nil {
+			return nil
+		}
+		common.Title = title(common, r)
+		return renderTemplate(w, "app.html", common)
+	}
+}
+
 func serveHome(w http.ResponseWriter, r *http.Request) error {
 	common, err := newCommon(w, r, "sourcegraph", serveError)
 	if err != nil {
