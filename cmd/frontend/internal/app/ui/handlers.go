@@ -83,3 +83,18 @@ func serveHome(w http.ResponseWriter, r *http.Request) error {
 	http.Redirect(w, r, r.URL.String(), http.StatusTemporaryRedirect)
 	return nil
 }
+
+func serveWelcome(w http.ResponseWriter, r *http.Request) error {
+	common, err := newCommon(w, r, "Sourcegraph", serveError)
+	if err != nil {
+		return err
+	}
+	if common == nil {
+		return nil // request was handled
+	}
+
+	if !envvar.SourcegraphDotComMode() {
+		w.WriteHeader(http.StatusNotFound)
+	}
+	return renderTemplate(w, "app.html", common)
+}

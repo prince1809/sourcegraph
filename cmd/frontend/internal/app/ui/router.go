@@ -12,15 +12,21 @@ import (
 	"gopkg.in/inconshreveable/log15.v2"
 	"log"
 	"net/http"
+	"net/url"
 	"runtime/debug"
 )
 
 const (
-	routeHome  = "home"
-	routeStart = "start"
+	routeHome           = "home"
+	routeStart          = "start"
+	routeSearch         = "search"
+	routeSearchBadge    = "search-badge"
+	routeSearchSearches = "search-searches"
 
 	aboutRedirectScheme = "https"
 	aboutRedirectHost   = "about.sourcegraph.com"
+
+	routeWelcome = "welcome"
 )
 
 // Router returns the router that serves pages for our web app.
@@ -38,6 +44,8 @@ func newRouter() *mux.Router {
 
 	// Top-level routes.
 	r.Path("/").Methods("GET").Name(routeHome)
+	r.Path("/start").Methods("GET").Name(routeStart)
+	r.PathPrefix("/welcome").Methods("GET").Name(routeWelcome)
 
 	return r
 }
@@ -51,6 +59,35 @@ func initRouter() {
 	router := newRouter()
 	uirouter.Router = router // make accessible to other packages
 	router.Get(routeHome).Handler(handler(serveHome))
+	router.Get(routeStart).Handler(staticRedirectHandler("/welcome", http.StatusMovedPermanently))
+	router.Get(routeWelcome).Handler(handler(serveWelcome))
+}
+
+// staticRedirectHandler returns an HTTP handler that redirects all requests to
+// the specified url or relative path with the specified status code.
+//
+// The scheme, host and path in the specified url overrides ones in the incoming
+// request. For example:
+//
+// staticRedirectHandler("http://google.com") serving "https://sourcegraph.com/foobar?q=foo" -> "https://google.com/foobar?q=foo"
+// staticRedirectHandler("/foo") serving "https://"
+func staticRedirectHandler(u string, code int) http.Handler {
+	target, err := url.Parse(u)
+	if err != nil {
+		panic(err)
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if target.Scheme != "" {
+			r.URL.Scheme = target.Scheme
+		}
+		if target.Host != "" {
+			r.URL.Host = target.Host
+		}
+		if target.Path != "" {
+			r.URL.Path = target.Path
+		}
+		http.Redirect(w, r, r.URL.String(), code)
+	})
 }
 
 // handler wraps an HTTP handler that returns potential errors. If any error is
