@@ -5,11 +5,14 @@ import "github.com/gorilla/mux"
 const (
 	GraphQL = "graphql"
 
-	Registry    = "registry"
+	Registry = "registry"
+
+	RepoShield  = "repo.shield"
 	RepoRefresh = "repo.refresh"
 	Telemetry   = "telemetry"
 
 	SavedQueriesListAll = "internal.saved-queries.list-all"
+	ReposList           = "internal.repos.list"
 	Configuration       = "internal.configuration"
 )
 
@@ -38,6 +41,7 @@ func NewInternal(base *mux.Router) *mux.Router {
 	base.StrictSlash(true)
 	// Internal API endpoints should only be served on the internal Handler
 	base.Path("/saved-queries/list-all").Methods("POST").Name(SavedQueriesListAll)
+	base.Path("/repos/list").Methods("POST").Name(ReposList)
 	base.Path("/configuration").Methods("POST").Name(Configuration)
 
 	addRegistryRoute(base)

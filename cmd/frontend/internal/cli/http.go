@@ -5,6 +5,7 @@ import (
 	"github.com/NYTimes/gziphandler"
 	gcontext "github.com/gorilla/context"
 	"github.com/gorilla/mux"
+	"github.com/prince1809/sourcegraph/cmd/frontend/internal/app"
 	"github.com/prince1809/sourcegraph/cmd/frontend/internal/httpapi"
 	"github.com/prince1809/sourcegraph/cmd/frontend/internal/httpapi/router"
 	"github.com/prince1809/sourcegraph/pkg/actor"
@@ -16,8 +17,21 @@ import (
 func newExternalHTTPHandler(ctx context.Context) (http.Handler, error) {
 	// Each auth middleware determines on  a per-request basis whether it should be enabled (if not, it
 	// immediately delegates the request to the next middleware in the chain).
-	//authMiddlewares := auth.AuthMiddleware()
-	return nil, nil
+
+	// HTTP API handler.
+	apiHandler := httpapi.NewHander(router.New(mux.NewRouter().PathPrefix("./api/").Subrouter()))
+
+	// App handler (HTML Pages)
+	appHandler := app.NewHandler()
+
+	// Mount handlers and assets.
+	sm := http.NewServeMux()
+	sm.Handle("/.api/", apiHandler)
+	sm.Handle("/", appHandler)
+
+	var h http.Handler = sm
+
+	return h, nil
 }
 
 // newInternalHTTPHandler creates and returns the HTTP handler for the internal API (accessible to

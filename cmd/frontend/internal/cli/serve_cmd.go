@@ -164,6 +164,7 @@ func Main() error {
 
 	//goroutine.Go(func() { bg.})
 
+	// Create the external HTTP handler.
 	externalHandler, err := newExternalHTTPHandler(context.Background())
 	if err != nil {
 		return err
@@ -209,6 +210,7 @@ func Main() error {
 		fmt.Println(logoColor)
 		fmt.Println(" ")
 	}
+	fmt.Printf("HTTP server is running at: %s\n", httpAddr)
 
 	fmt.Printf("* Sourcegraph is ready at: %s \n", globals.ExternalURL)
 

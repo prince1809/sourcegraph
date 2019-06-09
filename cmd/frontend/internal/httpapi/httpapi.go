@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prince1809/sourcegraph/cmd/frontend/internal/pkg/handlerutil"
+	"github.com/prince1809/sourcegraph/cmd/frontend/registry"
 	"github.com/prince1809/sourcegraph/pkg/env"
 	"github.com/prince1809/sourcegraph/pkg/trace"
 	"gopkg.in/inconshreveable/log15.v2"
@@ -12,6 +13,31 @@ import (
 
 	apirouter "github.com/prince1809/sourcegraph/cmd/frontend/internal/httpapi/router"
 )
+
+// NewHandler returns a new API handler that uses the provided API
+// router, which must have been created by httpapi/router.New or
+// creates a new one if nil.
+//
+// 🚨 SECURITY: The caller MUST wrap the returned handler in middleware that checks authentication
+// and sets the actor in the request context.
+func NewHander(m *mux.Router) http.Handler {
+	if m == nil {
+		m = apirouter.New(nil)
+	}
+	m.StrictSlash(true)
+
+	// Set handlers for the installed routes.
+	m.Get(apirouter.RepoShield)
+
+	m.Get(apirouter.Registry).Handler(trace.TraceRoute(handler(registry.HandleRegistry)))
+
+	m.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("API no route: %s %s from %s", r.Method, r.URL, r.Referer())
+		http.Error(w, "no route", http.StatusNotFound)
+	})
+
+	return m
+}
 
 // NewInternalHTTPHandler returns a new API handler for internal endpoints that uses
 // the provided API router, which must have been created by httpapi/router.NewInternal.
@@ -26,6 +52,7 @@ func NewInternalHandler(m *mux.Router) http.Handler {
 
 	m.StrictSlash(true)
 
+	m.Get(apirouter.ReposList).Handler(trace.TraceRoute(handler(serveReposList)))
 	m.Get(apirouter.Configuration).Handler(trace.TraceRoute(handler(serveConfiguration)))
 	m.Path("/ping").Methods("GET").Name("ping").HandlerFunc(handlePing)
 
