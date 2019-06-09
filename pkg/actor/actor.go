@@ -4,7 +4,9 @@ package actor
 
 import (
 	"context"
+	"fmt"
 	"github.com/prince1809/sourcegraph/pkg/trace"
+	"strconv"
 )
 
 // Actor represents an agent that accesses resources. It can represent an anonymous user, an
@@ -25,11 +27,30 @@ type Actor struct {
 
 func FromUser(uid int32) *Actor { return &Actor{UID: uid} }
 
+func (a *Actor) UIDString() string { return strconv.Itoa(int(a.UID)) }
+
+func (a *Actor) String() string {
+	return fmt.Sprintf("Actor UID %d, internal %t", a.UID, a.Internal)
+}
+
+// IsAuthenticated returns true if the actor is derived from an authenticated user.
+func (a *Actor) IsAuthenticated() bool {
+	return a != nil && a.UID != 0
+}
+
 type key int
 
 const (
 	actorKey key = iota
 )
+
+func FromContext(ctx context.Context) *Actor {
+	a, ok := ctx.Value(actorKey).(*Actor)
+	if !ok || a == nil {
+		return &Actor{}
+	}
+	return a
+}
 
 func WithActor(ctx context.Context, a *Actor) context.Context {
 	if a != nil && a.UID != 0 {

@@ -1,10 +1,13 @@
 package ui
 
 import (
+	"github.com/prince1809/sourcegraph/cmd/frontend/envvar"
 	"github.com/prince1809/sourcegraph/cmd/frontend/internal/app/jscontext"
+	"github.com/prince1809/sourcegraph/pkg/actor"
 	"github.com/prince1809/sourcegraph/pkg/conf"
 	"html/template"
 	"net/http"
+	"net/url"
 )
 
 type InjectedHTML struct {
@@ -68,5 +71,15 @@ func serveHome(w http.ResponseWriter, r *http.Request) error {
 		return nil // request was handled
 	}
 
+	if envvar.SourcegraphDotComMode() && !actor.FromContext(r.Context()).IsAuthenticated() {
+		// The user is not signed in and tried to access Sourcegraph.com. redirects to
+		// about.sourcegraph.com so they see general info page.
+		http.Redirect(w, r, (&url.URL{Scheme: aboutRedirectScheme, Host: aboutRedirectHost}).String(), http.StatusTemporaryRedirect)
+		return nil
+	}
+
+	// On non-Sourcegraph.com instances, there is no separate homepage, so redirect to /search.
+	r.URL.Path = "/search"
+	http.Redirect(w, r, r.URL.String(), http.StatusTemporaryRedirect)
 	return nil
 }

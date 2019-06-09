@@ -12,11 +12,15 @@ import (
 	"gopkg.in/inconshreveable/log15.v2"
 	"log"
 	"net/http"
+	"runtime/debug"
 )
 
 const (
 	routeHome  = "home"
-	souteStart = "start"
+	routeStart = "start"
+
+	aboutRedirectScheme = "https"
+	aboutRedirectHost   = "about.sourcegraph.com"
 )
 
 // Router returns the router that serves pages for our web app.
@@ -62,9 +66,12 @@ func handler(f func(w http.ResponseWriter, r *http.Request) error) http.Handler 
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if rec := recover(); rec != nil {
-				serveError()
+				serveError(w, r, recoverError{recover: rec, stack: debug.Stack()}, http.StatusInternalServerError)
 			}
 		}()
+		if err := f(w, r); err != nil {
+			serveError(w, r, err, http.StatusInternalServerError)
+		}
 	})
 	return trace.TraceRoute(gziphandler.GzipHandler(h))
 }
