@@ -2,13 +2,16 @@ package cli
 
 import (
 	"context"
+	"fmt"
 	"github.com/NYTimes/gziphandler"
 	gcontext "github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	"github.com/prince1809/sourcegraph/cmd/frontend/internal/app"
+	"github.com/prince1809/sourcegraph/cmd/frontend/internal/cli/middleware"
 	"github.com/prince1809/sourcegraph/cmd/frontend/internal/httpapi"
 	"github.com/prince1809/sourcegraph/cmd/frontend/internal/httpapi/router"
 	"github.com/prince1809/sourcegraph/pkg/actor"
+	"github.com/prince1809/sourcegraph/pkg/version"
 	"net/http"
 )
 
@@ -31,7 +34,24 @@ func newExternalHTTPHandler(ctx context.Context) (http.Handler, error) {
 
 	var h http.Handler = sm
 
+	// Wrap in middleware.
+
+	h = healthCheckMiddleware(h)
+	h = gcontext.ClearHandler(h)
+	h = middleware.Trace(h)
+
 	return h, nil
+}
+
+func healthCheckMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/healthz", "/__version":
+			fmt.Fprintf(w, version.Version())
+		default:
+			next.ServeHTTP(w, r)
+		}
+	})
 }
 
 // newInternalHTTPHandler creates and returns the HTTP handler for the internal API (accessible to

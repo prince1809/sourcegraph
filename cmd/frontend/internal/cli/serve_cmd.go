@@ -11,6 +11,7 @@ import (
 	"github.com/prince1809/sourcegraph/pkg/db/dbconn"
 	"github.com/prince1809/sourcegraph/pkg/debugserver"
 	"github.com/prince1809/sourcegraph/pkg/env"
+	"github.com/prince1809/sourcegraph/pkg/processrestart"
 	"github.com/prince1809/sourcegraph/pkg/sysreq"
 	"github.com/prince1809/sourcegraph/pkg/tracer"
 	"github.com/prince1809/sourcegraph/pkg/version"
@@ -205,6 +206,16 @@ func Main() error {
 		})
 	}
 
+	go func() {
+		<-processrestart.WillRestart
+		// Block forever so we don't return from main func and exit this process. Package processrestart takes care
+		// of killing and restarting this process externally
+		srv.wg.Add(1)
+
+		log15.Debug("Stopping HTTP server due to imminent restart")
+		srv.Close()
+	}()
+
 	if printLogo {
 		fmt.Println(" ")
 		fmt.Println(logoColor)
@@ -246,6 +257,16 @@ func (s *httpServers) addServer(srv *http.Server) *http.Server {
 	}
 	s.servers = append(s.servers, srv)
 	return srv
+}
+
+// Close closes all servers added
+func (s *httpServers) Close() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, srv := range s.servers {
+		srv.Close()
+	}
+	s.servers = nil
 }
 
 // Wait waits until all servers are closed.
