@@ -2,10 +2,10 @@ package conf
 
 import (
 	"context"
-	"github.com/labstack/gommon/log"
 	"github.com/pkg/errors"
 	"github.com/prince1809/sourcegraph/pkg/api"
 	"github.com/prince1809/sourcegraph/pkg/conf/conftypes"
+	"log"
 	"math/rand"
 	"net"
 	"net/url"

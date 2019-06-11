@@ -30,11 +30,10 @@ require (
 	github.com/kevinburke/differ v0.0.0-20180721181420-bdfd927653c8
 	github.com/kevinburke/go-bindata v3.13.0+incompatible
 	github.com/kr/text v0.1.0
-	github.com/labstack/gommon v0.2.8
 	github.com/lib/pq v1.1.1
 	github.com/mattn/go-colorable v0.1.1 // indirect
 	github.com/mattn/go-isatty v0.0.7 // indirect
-	github.com/mattn/go-sqlite3 v1.10.0 // indirect
+	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/mattn/goreman v0.0.0-00010101000000-000000000000
 	github.com/mcuadros/go-version v0.0.0-20190308113854-92cdf37c5b75
 	github.com/neelance/parallel v0.0.0-20160708114440-4de9ce63d14c
@@ -49,7 +48,6 @@ require (
 	github.com/sourcegraph/docsite v0.0.0-20190329030636-57dceb634057
 	github.com/sourcegraph/go-jsonschema v0.0.0-20190205151546-7939fa138765
 	github.com/sourcegraph/jsonx v0.0.0-20190114210550-ba8cb36a8614
-	github.com/valyala/fasttemplate v1.0.1 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.1.0

@@ -8,7 +8,7 @@
 package goroutine
 
 import (
-	"github.com/labstack/gommon/log"
+	"log"
 	"runtime/debug"
 )
 
